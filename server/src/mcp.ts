@@ -24,6 +24,9 @@ import { writeDigest } from './digest.js';
 import type { Runtime } from './runtime.js';
 import { clockLabel, localParts, weekdayName } from './time.js';
 
+/** A caption as the end of a sentence: one closing full stop, never two. */
+const sentence = (caption: string) => `${caption.replace(/[.!?]+$/, '')}.`;
+
 export const CARD_URI = 'ui://pawzoo/card.html';
 /** Where cards load snapshots from. The card view runs sandboxed, so it needs an absolute origin. */
 export const PUBLIC_URL = (process.env.PAWZOO_PUBLIC_URL ?? `http://127.0.0.1:${process.env.PORT ?? 8787}`).replace(/\/$/, '');
@@ -100,8 +103,8 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
       const first = moments[0];
       const say =
         moments.length === 1
-          ? `At ${first.time} on the ${first.camera} camera: ${first.caption}.`
-          : `I found ${moments.length} moments. The first was at ${first.time}: ${first.caption}.`;
+          ? `At ${first.time} on the ${first.camera} camera: ${sentence(first.caption)}`
+          : `I found ${moments.length} moments. The first was at ${first.time}: ${sentence(first.caption)}`;
       return reply(say, { card: 'moments', query, moments });
     },
   );
@@ -117,9 +120,10 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
       }),
     },
     async ({ target, event_id }) => {
-      if (target === 'moment' && !event_id) return fail('Which moment? Use find_moment first.');
-      rt.push({ type: 'cast', target, eventId: event_id, date: rt.today() });
+      if (target === 'moment' && !event_id) return fail("I couldn't find that moment on camera today, so there's nothing to play.");
       const reel = await rt.read((s) => dayReel(s, rt.today(), rt.now()));
+      if (target === 'day_reel' && !reel.chapters.length) return fail("Nothing's on camera yet today, so there's no reel to play.");
+      rt.push({ type: 'cast', target, eventId: event_id, date: rt.today() });
       const say = target === 'day_reel' ? `Playing ${reel.title} on the TV. It's ${reel.totalSeconds} seconds.` : 'Playing it on the TV.';
       return { content: [{ type: 'text' as const, text: say }], structuredContent: { say, target, event_id: event_id ?? null } };
     },
@@ -233,14 +237,15 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
       const now = rt.now();
       const { slots, facts } = await rt.read((s) => ({ slots: availableSlots(s, now, service), facts: s.facts.map((f) => f.text) }));
       const tz = 'America/Chicago';
-      const preferMorning = service === 'grooming' && facts.some((f) => /saturday mornings? (are|is) calmer/i.test(f));
-      const ordered = preferMorning
-        ? [...slots].sort((a, b) => Number(localParts(b.startAt, tz).time < '12:00') - Number(localParts(a.startAt, tz).time < '12:00'))
-        : slots;
+      // What the family said ("Saturday mornings are calmer") moves those slots to the top; the rest stay in date order.
+      const preferSaturdayMorning = service === 'grooming' && facts.some((f) => /saturday mornings? (are|is) calmer/i.test(f));
+      const isSaturdayMorning = (at: string) => weekdayName(localParts(at, tz).date) === 'Saturday' && localParts(at, tz).time < '12:00';
+      const ordered = preferSaturdayMorning ? [...slots].sort((a, b) => Number(isSaturdayMorning(b.startAt)) - Number(isSaturdayMorning(a.startAt))) : slots;
       if (!ordered.length) return reply('No open slots this week.', { card: 'slots', service, slots: [] });
       const first = ordered[0];
       const when = `${weekdayName(localParts(first.startAt, tz).date)} at ${clockLabel(first.startAt, tz)}`;
-      const say = `${first.provider} has ${when}${preferMorning ? ', a morning slot, since you said she is calmer then' : ''}. $${first.priceUsd}. Want it?`;
+      const because = preferSaturdayMorning && isSaturdayMorning(first.startAt) ? ', since you said Saturday mornings are calmer for her' : '';
+      const say = `${first.provider} has ${when}${because}. $${first.priceUsd}. Want it?`;
       return reply(say, { card: 'slots', service, slots: ordered, recommended: first.id });
     },
   );

@@ -97,7 +97,16 @@ function sceneFor(tool: string, result: Any): string | null {
   return card;
 }
 
-const memory: { lastConfirmation?: string; firstMoment?: string; recommendedSlot?: string; openAlert?: string; lastWalk?: string } = {};
+type Call = { name: string; arguments: Any };
+const memory: {
+  lastConfirmation?: string;
+  firstMoment?: string;
+  recommendedSlot?: string;
+  openAlert?: string;
+  lastWalk?: string;
+  /** What a plain "yes" means after an answer that ended on a question ("Want me to reorder?"). */
+  offer?: Call;
+} = {};
 const history: Array<{ role: 'person' | 'assistant'; text: string }> = [];
 let client: Client;
 let tools: Any[] = [];
@@ -210,10 +219,22 @@ function remember(tool: string, result: Any): void {
   const s = result.structuredContent ?? {};
   if (s.action?.id) memory.lastConfirmation = s.action.id;
   if (tool === 'confirm_action') memory.lastConfirmation = undefined;
-  if (s.moments?.length) memory.firstMoment = s.moments[0].eventId;
+  if (tool === 'find_moment') memory.firstMoment = s.moments?.[0]?.eventId;
   if (s.recommended) memory.recommendedSlot = s.recommended;
   if (s.report?.walk?.id) memory.lastWalk = s.report.walk.id;
   if (s.alerts?.length) memory.openAlert = s.alerts[0].id;
+  // "Yes" answers the latest question: a quote waiting for its OK, or the offer the answer ended on.
+  // A quote stops waiting once the conversation moves on, so an old food quote never rides a later yes.
+  const line = String(s.say ?? '').trim();
+  const tip = /pay with a \$(\d+(?:\.\d+)?) tip\?$/i.exec(line);
+  if (s.action?.id) memory.offer = undefined;
+  else {
+    if (tool !== 'confirm_action') memory.lastConfirmation = undefined;
+    if (tool === 'find_care_slots' && s.recommended) memory.offer = { name: 'quote_booking', arguments: { slot_id: s.recommended } };
+    else if (/reorder\b[^?]*\?$/i.test(line)) memory.offer = { name: 'quote_food_order', arguments: { quantity: 1 } };
+    else if (tip) memory.offer = { name: 'quote_walk_payment', arguments: { tip_usd: Number(tip[1]), ...(memory.lastWalk ? { walk_id: memory.lastWalk } : {}) } };
+    else memory.offer = undefined;
+  }
   if (tool === 'resolve_alert') {
     memory.openAlert = undefined;
     banner.hidden = true;
@@ -257,14 +278,33 @@ async function turn(utterance: string): Promise<void> {
   $('#brain').textContent = plan.source === 'bedrock' ? `Amazon Bedrock (${plan.modelId ?? 'model'})` : 'rules (offline)';
 
   if (!plan.calls.length) {
+    // "No", or anything else that isn't a tool call, moves on: nothing is left waiting for a yes.
+    memory.offer = undefined;
+    memory.lastConfirmation = undefined;
     say(plan.say ?? 'Sorry, I missed that.');
     return;
   }
   let spoken = '';
-  for (const call of plan.calls) {
-    const args = fill(call.arguments);
-    if (call.name === 'confirm_action' && !args.confirmation_id) {
-      say("There's nothing waiting for a yes right now.");
+  for (const planned of plan.calls) {
+    let call: Call = planned;
+    let args = fill(call.arguments);
+    // A placeholder with nothing behind it yet: answer in plain words, or take the step it needs first.
+    const unresolved = Object.entries(call.arguments).find(([k, v]) => typeof v === 'string' && v.startsWith('$') && args[k] === undefined)?.[1];
+    if (unresolved === '$last_confirmation') {
+      if (!memory.offer) {
+        say("There's nothing waiting for a yes right now.");
+        return;
+      }
+      call = memory.offer;
+      args = call.arguments;
+    } else if (unresolved === '$recommended_slot') {
+      call = { name: 'find_care_slots', arguments: { service: 'grooming' } };
+      args = call.arguments;
+    } else if (unresolved === '$first_moment') {
+      say("I couldn't find that moment on camera today.");
+      return;
+    } else if (unresolved === '$open_alert') {
+      say("There's no open alert. Biscuit is safe at home.");
       return;
     }
     const result = (await client.callTool({ name: call.name, arguments: args })) as Any;
@@ -278,6 +318,11 @@ async function turn(utterance: string): Promise<void> {
     const line = result.structuredContent?.say ?? result.content?.[0]?.text ?? '';
     if (result.isError) {
       say(line || 'That did not work.');
+      return;
+    }
+    // Nothing found: say so and stop, rather than play an older moment on the TV.
+    if (call.name === 'find_moment' && !result.structuredContent?.moments?.length) {
+      say(line);
       return;
     }
     spoken = spoken ? `${spoken} ${line}` : line;

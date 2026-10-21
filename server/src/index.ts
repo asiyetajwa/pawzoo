@@ -147,8 +147,7 @@ app.post('/api/demo/escape', async (_req, res) => {
 
 app.post('/api/demo/reset', async (_req, res) => {
   await rt.reset();
-  rt.clock.release();
-  rt.pushClock();
+  await startClock();
   res.json({ ok: true });
 });
 
@@ -164,6 +163,20 @@ app.post('/api/tv/cast', (req, res) => {
 
 app.use('/media', express.static(mediaDir, { maxAge: '1h' }));
 if (existsSync(webDir)) app.use(express.static(webDir));
+
+/**
+ * The demo opens at 7 PM, with the whole recorded day behind it, so it never starts on an empty day
+ * (whatever the hour in Chicago). PAWZOO_LIVE_CLOCK=1 follows the real time instead.
+ */
+async function startClock(): Promise<void> {
+  if (process.env.PAWZOO_LIVE_CLOCK === '1') {
+    rt.clock.release();
+    rt.pushClock();
+    await rt.catchUp();
+    return;
+  }
+  await rt.setLocalTime(process.env.PAWZOO_START_TIME ?? '19:00');
+}
 
 const port = Number(process.env.PORT ?? 8787);
 // --lan (npm run start:tv) listens on the network so a Fire TV or phone on the same Wi-Fi can connect.
@@ -181,7 +194,7 @@ function lanAddresses(): string[] {
 if (process.env.PAWZOO_NO_LISTEN !== '1') {
   const server = app.listen(port, host, async () => {
     try {
-      await rt.catchUp();
+      await startClock();
     } catch (err) {
       console.error('[startup] Could not replay the demo day:', (err as Error).message);
     }

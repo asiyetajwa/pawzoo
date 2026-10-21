@@ -153,6 +153,8 @@ export interface Feeding {
 /** Everything Pawzoo remembers. One document per household. */
 export interface State {
   version: 1;
+  /** The demo day this state was seeded for; a state saved on another day is re-seeded. */
+  seededFor?: string;
   household: Household;
   pet: Pet;
   cameras: Camera[];

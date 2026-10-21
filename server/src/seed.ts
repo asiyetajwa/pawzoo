@@ -87,24 +87,29 @@ export function eventFromScript(s: ScenarioEvent, date: string, timeZone: string
   };
 }
 
+/** Open slots this coming week, on the weekdays their ids name, whatever day the demo runs. */
 export function careSlots(date: string, timeZone: string): CareSlot[] {
-  const slot = (id: string, service: CareSlot['service'], provider: string, day: number, time: string, minutes: number, priceUsd: number): CareSlot => ({
+  const [y, m, d] = date.split('-').map(Number);
+  const today = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  // Days until the next given weekday (0 = Sunday), always at least tomorrow.
+  const next = (weekday: number) => ((weekday - today + 7) % 7) || 7;
+  const slot = (id: string, service: CareSlot['service'], provider: string, weekday: number, time: string, minutes: number, priceUsd: number): CareSlot => ({
     id,
     service,
     provider,
-    startAt: zonedToUtc(addDays(date, day), time, timeZone).toISOString(),
+    startAt: zonedToUtc(addDays(date, next(weekday)), time, timeZone).toISOString(),
     minutes,
     priceUsd,
   });
   return [
-    slot('groom-sat-0930', 'grooming', 'Sudsy Paws Grooming', 2, '09:30', 90, 65),
-    slot('groom-sat-1300', 'grooming', 'Sudsy Paws Grooming', 2, '13:00', 90, 65),
-    slot('groom-tue-1000', 'grooming', 'Sudsy Paws Grooming', 5, '10:00', 90, 65),
-    slot('vet-mon-0900', 'vet_checkup', 'Riverside Animal Clinic', 4, '09:00', 30, 70),
-    slot('vet-wed-1530', 'vet_checkup', 'Riverside Animal Clinic', 6, '15:30', 30, 70),
-    slot('walk-fri-1700', 'extra_walk', 'Leash & Lead', 1, '17:00', 30, 22),
-    slot('walk-sat-1700', 'extra_walk', 'Leash & Lead', 2, '17:00', 30, 22),
-  ];
+    slot('groom-sat-0930', 'grooming', 'Sudsy Paws Grooming', 6, '09:30', 90, 65),
+    slot('groom-sat-1300', 'grooming', 'Sudsy Paws Grooming', 6, '13:00', 90, 65),
+    slot('groom-tue-1000', 'grooming', 'Sudsy Paws Grooming', 2, '10:00', 90, 65),
+    slot('vet-mon-0900', 'vet_checkup', 'Riverside Animal Clinic', 1, '09:00', 30, 70),
+    slot('vet-wed-1530', 'vet_checkup', 'Riverside Animal Clinic', 3, '15:30', 30, 70),
+    slot('walk-fri-1700', 'extra_walk', 'Leash & Lead', 5, '17:00', 30, 22),
+    slot('walk-sat-1700', 'extra_walk', 'Leash & Lead', 6, '17:00', 30, 22),
+  ].sort((a, b) => a.startAt.localeCompare(b.startAt));
 }
 
 export function initialState(date: string, timeZone = TIME_ZONE): State {
@@ -128,6 +133,7 @@ export function initialState(date: string, timeZone = TIME_ZONE): State {
 
   return {
     version: 1,
+    seededFor: date,
     household: {
       id: 'hh-rivera',
       name: 'The Rivera family',

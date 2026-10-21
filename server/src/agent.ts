@@ -307,7 +307,7 @@ export function quoteOrder(state: State, productId: string, quantity: number, no
 
 export function quoteWalkPayment(state: State, walkId: string, tipUsd: number, now: Date): PendingAction & { kind: 'walk_payment' } {
   const walk = state.walks.find((w) => w.id === walkId);
-  if (!walk) throw new Error(`No walk ${walkId}`);
+  if (!walk) throw new Error("I don't see a walk to pay for yet today.");
   if (walk.paid) throw new Error(`The ${weekdayName(walk.date)} walk is already paid.`);
   const action = { id: pendingId(), kind: 'walk_payment' as const, walkId, amountUsd: state.walkBooking.priceUsd, tipUsd, createdAt: now.toISOString() };
   state.pending.push(action);
@@ -316,7 +316,7 @@ export function quoteWalkPayment(state: State, walkId: string, tipUsd: number, n
 
 export function quoteBooking(state: State, slotId: string, now: Date): PendingAction & { kind: 'booking' } {
   const slot = availableSlots(state, now).find((s) => s.id === slotId);
-  if (!slot) throw new Error(`Slot ${slotId} is not available.`);
+  if (!slot) throw new Error('That slot is no longer open. Ask again for open slots.');
   const action = { id: pendingId(), kind: 'booking' as const, slotId, createdAt: now.toISOString() };
   state.pending.push(action);
   return action;
@@ -351,12 +351,13 @@ export function confirm(state: State, confirmationId: string, now: Date): Confir
     case 'walk_payment': {
       const walk = state.walks.find((w) => w.id === action.walkId);
       if (!walk) throw new Error('That walk no longer exists.');
+      if (walk.paid) throw new Error(`The ${weekdayName(walk.date)} walk is already paid.`);
       walk.paid = { at: now.toISOString(), amountUsd: action.amountUsd, tipUsd: action.tipUsd };
       return { kind: 'walk_payment', walk };
     }
     case 'booking': {
       const slot = careSlots(today, tz).find((s) => s.id === action.slotId);
-      if (!slot) throw new Error('That slot is gone.');
+      if (!slot || state.bookings.some((b) => b.slot.id === slot.id)) throw new Error('That slot was just taken. Ask again for open slots.');
       const booking: Booking = { id: `booking-${randomUUID().slice(0, 8)}`, slot, bookedAt: now.toISOString() };
       state.bookings.push(booking);
       return { kind: 'booking', booking };

@@ -89,7 +89,8 @@ export class Runtime {
         this.fallBackToFile(err);
         loaded = await this.opts.store.load('hh-rivera');
       }
-      this.state = loaded ?? initialState(this.demoDate);
+      // A state saved on an earlier day would show yesterday's walks as today's, so start that day fresh.
+      this.state = loaded && loaded.seededFor === this.demoDate ? loaded : initialState(this.demoDate);
     }
     return this.state;
   }
