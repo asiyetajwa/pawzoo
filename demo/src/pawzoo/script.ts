@@ -1,6 +1,6 @@
 // Pawzoo film: scene order, voiceover lines and minimum on-screen time.
 // The screens are stills of the real app (scripts/capture.mjs). Voiceover: npm run voiceover
-// Written for the ear: "Alexa plus", not "Alexa+". <break time="1.0s" /> is an ElevenLabs pause tag.
+// Written for the ear: "Alexa plus", not "Alexa+". <break time="0.4s" /> is an ElevenLabs pause tag.
 
 export type SceneId = 'intro' | 'day' | 'walk' | 'pay' | 'food' | 'groom' | 'tv' | 'alert' | 'outro';
 
@@ -22,5 +22,5 @@ export const SCENES: SceneSpec[] = [
   { id: 'groom', voiceover: 'Need grooming? It finds open slots and puts Saturday morning first, because you told it that is when Biscuit is calmest.', minSeconds: 5.6 },
   { id: 'tv', voiceover: "In the evening, the family gathers round Fire TV to relive her day. Pawzoo cuts the camera footage into a keepsake reel, one chapter for every moment, so the little things she did today become memories you get to keep.", minSeconds: 5.6 },
   { id: 'alert', voiceover: 'And if Biscuit ever slips out the front door alone, Pawzoo speaks up right away, on your speaker and your TV.', minSeconds: 5.8 },
-  { id: 'outro', voiceover: 'Pawzoo. <break time="1.5s" /> Ring sees, Alexa plus acts, and Fire TV shows.', minSeconds: 4.4, after: { file: 'sfx/bark.mp3', gap: 0.35, seconds: 1.4, volume: 0.3 } },
+  { id: 'outro', voiceover: 'Pawzoo. <break time="0.4s" /> Ring sees, Alexa plus acts, and Fire TV shows.', minSeconds: 4.4, after: { file: 'sfx/bark.mp3', gap: 0.35, seconds: 1.4, volume: 0.3 } },
 ];

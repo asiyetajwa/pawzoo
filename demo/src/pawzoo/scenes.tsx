@@ -296,8 +296,8 @@ export const OutroScene: React.FC<SceneProps> = ({ duration }) => {
   const { fps } = useVideoConfig();
   const p = popAt(frame, fps, 2, 13);
   const lines = ['Ring sees.', 'Alexa+ acts.', 'Fire TV shows.'];
-  // Each line lands as Alan says it, after his pause on "Pawzoo" (frames at 60 fps, from the outro take).
-  const lineAt = [150, 222, 342];
+  // Each line lands as it is said, after the pause on "Pawzoo" (frames at 60 fps, from the outro take).
+  const lineAt = [73, 131, 196];
   return (
     <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', fontFamily: theme.font, color: theme.text }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 28, opacity: p, transform: `translateY(${String((1 - p) * 20)}px)` }}>
@@ -309,10 +309,10 @@ export const OutroScene: React.FC<SceneProps> = ({ duration }) => {
           <BlurText key={l} text={l} at={lineAt[i] ?? 0} style={{ fontSize: 50, fontWeight: 600, letterSpacing: '-0.02em', color: [theme.text, theme.violet, theme.text][i] }} />
         ))}
       </div>
-      <div style={{ marginTop: 54, opacity: interpolate(frame, [420, 450], [0, 1], clamp), fontSize: 24, color: theme.muted, letterSpacing: '0.02em' }}>
+      <div style={{ marginTop: 54, opacity: interpolate(frame, [260, 290], [0, 1], clamp), fontSize: 24, color: theme.muted, letterSpacing: '0.02em' }}>
         MCP server on Alexa+  ·  Ring API  ·  Fire OS app  ·  Amazon Bedrock (Nova 2 Lite)  ·  Amazon DynamoDB
       </div>
-      <div style={{ position: 'absolute', bottom: 40, opacity: interpolate(frame, [440, 470], [0, 1], clamp), fontSize: 18, color: theme.muted }}>
+      <div style={{ position: 'absolute', bottom: 40, opacity: interpolate(frame, [280, 310], [0, 1], clamp), fontSize: 18, color: theme.muted }}>
         Simulated Alexa+ add-on. The household, dog and purchases in this film are fictional.
       </div>
     </AbsoluteFill>

@@ -15,8 +15,8 @@ const apiKey = process.env.ELEVENLABS_API_KEY;
 if (!apiKey) throw new Error('ELEVENLABS_API_KEY is not set');
 const film = process.argv[2] ?? 'pawzoo';
 if (!/^[a-z]+$/.test(film)) throw new Error(`Unknown film "${film}"`);
-// Pawzoo is narrated by "Alan" (smooth, deep, confident) from the ElevenLabs Voice Library; it must be added to the account first.
-const voiceId = process.env.ELEVENLABS_VOICE_ID ?? 'Pc6mkcSQXB2l3WmfeKVS';
+// Pawzoo is narrated by "Jessica" (warm, bright, American) from the ElevenLabs default library.
+const voiceId = process.env.ELEVENLABS_VOICE_ID ?? 'cgSgspJ2msm6clMCkdW9';
 const modelId = process.env.ELEVENLABS_MODEL_ID ?? 'eleven_multilingual_v2';
 
 // Pull the scene list straight from the TypeScript source so the script stays
@@ -25,10 +25,10 @@ const scriptDir = process.env.SCRIPT ?? film;
 if (!/^[a-z]+$/.test(scriptDir)) throw new Error(`Unknown script "${scriptDir}"`);
 const source = readFileSync(new URL(`../src/${scriptDir}/script.ts`, import.meta.url), 'utf8');
 const stability = Number(process.env.ELEVENLABS_STABILITY ?? 0.35);
-const style = Number(process.env.ELEVENLABS_STYLE ?? 0.2);
+const style = Number(process.env.ELEVENLABS_STYLE ?? 0.45);
 const pause = Number(process.env.PAUSE ?? 0.3);
-// ElevenLabs speaking rate, 0.7 to 1.2. Alan reads deliberately, so the film nudges him up a little.
-const speed = Number(process.env.ELEVENLABS_SPEED ?? 1.1);
+// ElevenLabs speaking rate, 0.7 to 1.2.
+const speed = Number(process.env.ELEVENLABS_SPEED ?? 1.0);
 const scenes = [...source.matchAll(/id: '(\w+)',\s*voiceover:\s*\n?\s*(['"])(.*?)\2,/gs)].map((m) => ({
   id: m[1],
   text: m[3].replace(/\\'/g, "'"),
