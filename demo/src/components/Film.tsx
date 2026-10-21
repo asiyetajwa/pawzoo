@@ -26,7 +26,11 @@ export type SceneSpec<Id extends string> = {
   voiceover: string;
   /** Length in seconds the choreography needs; audio can only extend it. */
   minSeconds: number;
+  /** A sound that follows the line (a sign-off sting), `gap` seconds after it ends. The scene grows to fit it. */
+  after?: SceneSound;
 };
+
+export type SceneSound = { file: string; gap: number; seconds: number; volume: number };
 
 type VoiceoverClip = { id: string; file: string; seconds: number };
 
@@ -73,7 +77,9 @@ export function createFilm<Id extends string>(
         music = manifest.music ?? null;
         musicStart = manifest.musicStart ?? 0;
         for (const clip of voiceover) {
-          const needed = Math.ceil((clip.seconds + VO_LEAD + VO_TAIL) * FPS);
+          const after = scenes.find((s) => s.id === clip.id)?.after;
+          const tail = after ? after.gap + after.seconds + VO_TAIL : VO_TAIL;
+          const needed = Math.ceil((clip.seconds + VO_LEAD + tail) * FPS);
           frames[clip.id] = Math.max(frameOf(frames, clip.id), needed);
         }
       }
@@ -105,6 +111,11 @@ export function createFilm<Id extends string>(
               {clip ? (
                 <Sequence from={Math.round(VO_LEAD * FPS)}>
                   <Audio src={staticFile(clip.file)} />
+                </Sequence>
+              ) : null}
+              {s.after ? (
+                <Sequence from={Math.round((clip ? VO_LEAD + clip.seconds + s.after.gap : length / FPS - s.after.seconds - VO_TAIL) * FPS)}>
+                  <Audio src={staticFile(s.after.file)} volume={s.after.volume} />
                 </Sequence>
               ) : null}
             </Sequence>

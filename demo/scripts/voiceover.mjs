@@ -15,8 +15,8 @@ const apiKey = process.env.ELEVENLABS_API_KEY;
 if (!apiKey) throw new Error('ELEVENLABS_API_KEY is not set');
 const film = process.argv[2] ?? 'pawzoo';
 if (!/^[a-z]+$/.test(film)) throw new Error(`Unknown film "${film}"`);
-// Pawzoo uses "Jessica" (warm, cheerful, American) from the ElevenLabs default library.
-const voiceId = process.env.ELEVENLABS_VOICE_ID ?? 'cgSgspJ2msm6clMCkdW9';
+// Pawzoo is narrated by "Alan" (smooth, deep, confident) from the ElevenLabs Voice Library; it must be added to the account first.
+const voiceId = process.env.ELEVENLABS_VOICE_ID ?? 'Pc6mkcSQXB2l3WmfeKVS';
 const modelId = process.env.ELEVENLABS_MODEL_ID ?? 'eleven_multilingual_v2';
 
 // Pull the scene list straight from the TypeScript source so the script stays
@@ -25,8 +25,10 @@ const scriptDir = process.env.SCRIPT ?? film;
 if (!/^[a-z]+$/.test(scriptDir)) throw new Error(`Unknown script "${scriptDir}"`);
 const source = readFileSync(new URL(`../src/${scriptDir}/script.ts`, import.meta.url), 'utf8');
 const stability = Number(process.env.ELEVENLABS_STABILITY ?? 0.35);
-const style = Number(process.env.ELEVENLABS_STYLE ?? 0.45);
+const style = Number(process.env.ELEVENLABS_STYLE ?? 0.2);
 const pause = Number(process.env.PAUSE ?? 0.3);
+// ElevenLabs speaking rate, 0.7 to 1.2. Alan reads deliberately, so the film nudges him up a little.
+const speed = Number(process.env.ELEVENLABS_SPEED ?? 1.1);
 const scenes = [...source.matchAll(/id: '(\w+)',\s*voiceover:\s*\n?\s*(['"])(.*?)\2,/gs)].map((m) => ({
   id: m[1],
   text: m[3].replace(/\\'/g, "'"),
@@ -65,7 +67,7 @@ for (const [i, scene] of scenes.entries()) {
       // Neighbouring lines keep intonation continuous across separate clips.
       previous_text: previous,
       next_text: next,
-      voice_settings: { stability, similarity_boost: 0.8, style, use_speaker_boost: true },
+      voice_settings: { stability, similarity_boost: 0.8, style, use_speaker_boost: true, speed },
     }),
   });
   if (!res.ok) throw new Error(`ElevenLabs ${String(res.status)}: ${await res.text()}`);
@@ -74,10 +76,13 @@ for (const [i, scene] of scenes.entries()) {
   const raw = new URL(`${scene.id}.raw.mp3`, outDir).pathname;
   writeFileSync(raw, Buffer.from(data.audio_base64, 'base64'));
   // Expressive voices leave long gaps between sentences and trail off with
-  // silence. Cap every pause (0.3s for ad pacing) and trim the ends.
+  // silence. Cap every pause (0.3s for ad pacing) and trim the ends. A line with
+  // a <break time="Ns" /> tag keeps pauses up to that length, so the break survives.
+  const breakSeconds = Math.max(0, ...[...scene.text.matchAll(/<break time="([\d.]+)s"/g)].map((m) => Number(m[1])));
+  const linePause = Math.max(pause, breakSeconds);
   execFileSync('ffmpeg', [
     '-v', 'error', '-y', '-i', raw,
-    '-af', `silenceremove=start_periods=1:start_threshold=-45dB:stop_periods=-1:stop_duration=${String(pause)}:stop_threshold=-45dB:stop_silence=${String(pause)}`,
+    '-af', `silenceremove=start_periods=1:start_threshold=-45dB:stop_periods=-1:stop_duration=${String(linePause)}:stop_threshold=-45dB:stop_silence=${String(linePause)}`,
     '-c:a', 'libmp3lame', '-b:a', '192k',
     new URL(`${scene.id}.mp3`, outDir).pathname,
   ]);
