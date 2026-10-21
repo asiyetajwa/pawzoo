@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,49 +7,84 @@
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;800&display=swap" rel="stylesheet">
 <style>
-  :root { --bg: #15110e; --surface: #1d1814; --raised: #27201a; --ink: #f6ece2; --muted: #b9a796; --line: #3b3129; --accent: #f08a54; --warn: #f3a273; --warn-bg: #3a2519; color-scheme: dark; }
-  :root[data-theme="light"] { --bg: #f6efe6; --surface: #fffaf3; --raised: #ffffff; --ink: #2b211a; --muted: #7a6a5d; --line: #e6d8c7; --accent: #e8743b; --warn: #b4521f; --warn-bg: #fdeee3; color-scheme: light; }
+  :root { --page: #e7e7ec; --board: #ffffff; --ink: #1f1b2e; --muted: #8a8698; --band: #f4f4f7; --press: #1f1b2e; --press-ink: #ffffff; color-scheme: light; }
+  .board { --blob-a: #8b5cf6; --blob-b: #a78bfa; }
+  .board.alert { --blob-a: #f43f5e; --blob-b: #fb7185; }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: "Lexend", "Segoe UI", system-ui, sans-serif; overflow: hidden; }
-  .tv { position: fixed; inset: 0; display: flex; flex-direction: column; }
-  .home { flex: 1; display: grid; place-content: center; text-align: center; gap: 20px; padding: 5vh 6vw; }
-  .home img { width: 9vh; height: 9vh; margin: 0 auto; }
-  .home h1 { margin: 0; font-size: 7vh; letter-spacing: -0.02em; }
-  .home ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.2vh; font-size: 2.8vh; color: var(--muted); }
-  .play { justify-self: center; margin-top: 2vh; font: inherit; font-size: 3vh; font-weight: 600; padding: 1.6vh 4vh; border-radius: 999px; border: 0; background: var(--accent); color: var(--bg); cursor: pointer; }
-  .play:focus { outline: 0.6vh solid var(--ink); outline-offset: 0.6vh; }
-  .player { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-  .frame { position: relative; flex: 1; min-height: 0; background: #000; }
+  html, body { margin: 0; height: 100%; background: var(--page); color: var(--ink); font-family: "Outfit", "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  .tv { position: fixed; inset: 0; display: grid; place-items: center; }
+
+  /* Home and alert: the board */
+  .board { position: relative; width: 86vw; height: 80vh; background: var(--board); border-radius: 5vh; box-shadow: 0 8vh 12vh -7vh rgba(31,27,46,.45); overflow: hidden; }
+  .blob { position: absolute; left: 0; top: 0; width: 46%; height: 80%; border-radius: 5vh 26% 34% 0 / 5vh 22% 40% 0; background: linear-gradient(150deg, var(--blob-a), var(--blob-b)); }
+  .display { position: absolute; left: 9%; top: 22%; margin: 0; color: #fff; font-weight: 800; font-size: 11vh; line-height: .95; letter-spacing: -0.025em; }
+  .display span { display: block; }
+  .prop { position: absolute; filter: drop-shadow(0 3vh 2.5vh rgba(31,27,46,.3)); animation: bob 6s ease-in-out infinite; }
+  .prop.soft { filter: blur(8px); opacity: .9; }
+  .side { position: absolute; left: 54%; right: 5%; top: 10%; bottom: 10%; display: flex; flex-direction: column; }
+  .kicker { margin: 0 0 1vh; font-size: 1.6vh; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .title { margin: 0 0 3vh; font-size: 4.4vh; font-weight: 400; line-height: 1.15; }
+  .rows { list-style: none; margin: 0; padding: 0; display: grid; }
+  .rows li { padding: 2vh 2.2vh; border-radius: 1.8vh; font-size: 2.5vh; }
+  .rows li:nth-child(odd) { background: var(--band); }
+  .play { margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 2vh; font: inherit; font-size: 2.8vh; font-weight: 500; padding: 1.2vh 1.2vh 1.2vh 3.4vh; border-radius: 999px; border: 0; background: var(--press); color: var(--press-ink); cursor: pointer; }
+  .play::after { content: ""; width: 6vh; height: 6vh; border-radius: 50%; background: var(--press-ink) no-repeat center / 2.8vh url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%231f1b2e' d='M8 5v14l11-7z'/%3E%3C/svg%3E"); }
+  .play:focus { outline: 0.6vh solid #8b5cf6; outline-offset: 0.6vh; }
+  .avatar { position: absolute; right: 5%; top: 9%; width: 6vh; height: 6vh; }
+  .alert-still { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 2vh; background: #000; margin-bottom: 2.4vh; }
+  .alert-body { font-size: 3vh; line-height: 1.35; margin: 0; }
+  .hint { margin: 2vh 0 0; font-size: 2.2vh; color: var(--muted); }
+
+  /* Player: full-bleed clip, light rail */
+  .player { position: fixed; inset: 0; display: flex; flex-direction: column; background: #000; }
+  .frame { position: relative; flex: 1; min-height: 0; }
   .frame video, .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-  .overlay { position: absolute; left: 4vw; bottom: 4vh; right: 4vw; display: flex; flex-direction: column; gap: .6vh; }
-  .overlay .cap { font-size: 4.4vh; font-weight: 600; color: #fff; }
-  .overlay .meta { font-size: 2.4vh; color: #e7dccf; }
-  .overlay span { background: rgba(0,0,0,.55); padding: .4vh 1.2vh; border-radius: 1vh; width: fit-content; }
-  .rail { display: flex; gap: 1.4vw; overflow-x: auto; padding: 2vh 4vw 3vh; background: var(--surface); scrollbar-width: none; }
-  .chapter { flex: none; width: 15vw; display: grid; gap: .6vh; text-align: left; background: transparent; color: var(--ink); border: 0.4vh solid transparent; border-radius: 1.6vh; padding: .6vh; font: inherit; cursor: pointer; }
-  .chapter[aria-current="true"], .chapter:focus { border-color: var(--accent); outline: 0; }
-  .chapter .thumb { aspect-ratio: 16/9; border-radius: 1vh; background: var(--raised) center/cover no-repeat; }
-  .chapter .t { font-size: 1.8vh; color: var(--muted); }
-  .chapter .c { font-size: 2vh; line-height: 1.25; }
-  .alert { position: fixed; inset: 0; background: var(--warn-bg); display: grid; grid-template-columns: 1.2fr 1fr; gap: 4vw; align-items: center; padding: 6vh 6vw; }
-  .alert img { width: 100%; border-radius: 2vh; border: 0.5vh solid var(--warn); background: #000; aspect-ratio: 16/9; object-fit: cover; }
-  .alert h2 { margin: 0 0 2vh; color: var(--warn); font-size: 6vh; }
-  .alert p { margin: 0; font-size: 3.4vh; line-height: 1.35; }
-  .alert .hint { margin-top: 3vh; font-size: 2.4vh; color: var(--muted); }
-  .badge { position: fixed; top: 2vh; right: 2vw; font-size: 1.8vh; color: var(--muted); }
+  .overlay { position: absolute; left: 4vw; bottom: 4vh; display: flex; flex-direction: column; align-items: flex-start; gap: 1vh; }
+  .cap { background: var(--board); color: var(--ink); font-size: 3.6vh; font-weight: 500; padding: 1vh 2.4vh; border-radius: 999px; }
+  .meta { background: rgba(31,27,46,.7); color: #fff; font-size: 2vh; padding: .6vh 1.6vh; border-radius: 999px; }
+  .rail { display: flex; gap: 1.4vw; overflow-x: auto; padding: 2.4vh 4vw 3vh; background: var(--page); scrollbar-width: none; }
+  .chapter { flex: none; width: 15vw; display: grid; gap: .6vh; text-align: left; background: var(--board); color: var(--ink); border: 0.4vh solid transparent; border-radius: 2.2vh; padding: .8vh; font: inherit; cursor: pointer; }
+  .chapter[aria-current="true"], .chapter:focus { border-color: var(--press); outline: 0; }
+  .chapter .thumb { aspect-ratio: 16/9; border-radius: 1.4vh; background: var(--band) center/cover no-repeat; }
+  .chapter .t { font-size: 1.5vh; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; padding: 0 .4vh; }
+  .chapter .c { font-size: 1.9vh; line-height: 1.25; padding: 0 .4vh .4vh; }
+  .badge { position: fixed; top: 2vh; right: 2vw; font-size: 1.6vh; color: var(--muted); }
+  @keyframes bob { 50% { translate: 0 -1.2vh; } }
+  @media (prefers-reduced-motion: reduce) { .prop { animation: none; } }
 </style>
 </head>
 <body>
 <div class="tv">
-  <section id="home" class="home">
-    <img src="logo.svg" alt="">
-    <h1 id="title">Today</h1>
-    <ul id="summary"></ul>
-    <button id="play" class="play">Play the Day</button>
+  <section id="home" class="board">
+    <div class="blob"></div>
+    <h1 class="display" id="title"><span>Biscuit's</span><span>Day</span></h1>
+    <img class="prop" src="props/ball.svg" alt="" style="left:30%;top:46%;width:19%">
+    <img class="prop soft" src="props/bone.svg" alt="" style="left:5%;top:68%;width:13%">
+    <img class="prop soft" src="props/cushion.svg" alt="" style="left:34%;top:3%;width:9%;rotate:12deg">
+    <img class="avatar" src="logo.svg" alt="">
+    <div class="side">
+      <p class="kicker">Today on camera</p>
+      <p class="title">What she<br>got up to</p>
+      <ul id="summary" class="rows"></ul>
+      <button id="play" class="play">Play the Day</button>
+    </div>
   </section>
+
+  <section id="alert" class="board alert" hidden role="alert">
+    <div class="blob"></div>
+    <h1 class="display"><span>She's</span><span>Out</span></h1>
+    <img class="prop" src="props/house.svg" alt="" style="left:30%;top:46%;width:18%;rotate:-6deg">
+    <div class="side">
+      <p class="kicker">Front door camera</p>
+      <img id="alert-still" class="alert-still" alt="Front door camera">
+      <p id="alert-text" class="alert-body"></p>
+      <p class="hint">Say "She's back inside" when she's home.</p>
+    </div>
+  </section>
+
   <section id="player" class="player" hidden>
     <div class="frame">
       <video id="video" muted playsinline></video>
@@ -57,14 +92,6 @@
       <div class="overlay"><span id="caption" class="cap"></span><span id="meta" class="meta"></span></div>
     </div>
     <nav id="rail" class="rail" aria-label="Moments"></nav>
-  </section>
-  <section id="alert" class="alert" hidden role="alert">
-    <img id="alert-still" alt="Front door camera">
-    <div>
-      <h2>Biscuit Is Outside</h2>
-      <p id="alert-text"></p>
-      <p class="hint">Say "She's back inside" when she's home.</p>
-    </div>
   </section>
   <span class="badge">Pawzoo TV preview</span>
 </div>

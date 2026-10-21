@@ -44,6 +44,7 @@ function play(i: number): void {
   index = Math.max(0, Math.min(i, reel.chapters.length - 1));
   const c = reel.chapters[index];
   home.hidden = true;
+  alertEl.hidden = true;
   player.hidden = false;
   caption.textContent = c.caption;
   meta.textContent = `${c.time} · ${c.camera} camera`;
@@ -75,9 +76,11 @@ video.addEventListener('ended', next);
 
 async function showHome(): Promise<void> {
   const day = await (await fetch('/api/day')).json();
+  video.pause();
   player.hidden = true;
+  if (!alertEl.hidden) return;
   home.hidden = false;
-  title.textContent = `${day.pet.name}'s Day`;
+  title.innerHTML = `<span>${day.pet.name}'s</span><span>Day</span>`;
   $('#summary').innerHTML = (day.summary.highlights as string[]).map((h) => `<li>${h}</li>`).join('') || '<li>Nothing yet today.</li>';
   $<HTMLButtonElement>('#play').focus();
 }
@@ -114,15 +117,22 @@ es.onmessage = async (m) => {
       alertEl.hidden = true;
       void showHome();
     }
+    if (p.target !== 'home' && p.target !== 'alert') alertEl.hidden = true;
   }
   if (p.type === 'alert') {
+    video.pause();
+    player.hidden = true;
+    home.hidden = true;
     alertEl.hidden = false;
     $('#alert-text').textContent = p.alert.message;
     const day = await (await fetch('/api/day')).json();
     const ev = day.summary.moments.find((x: Any) => x.eventId === p.alert.eventId);
     $<HTMLImageElement>('#alert-still').src = ev ? media(ev.snapshot) : '';
   }
-  if (p.type === 'state' && p.reason === 'alert_resolved') alertEl.hidden = true;
+  if (p.type === 'state' && p.reason === 'alert_resolved') {
+    alertEl.hidden = true;
+    void showHome();
+  }
 };
 
 void showHome();

@@ -10,7 +10,13 @@ import { color } from './theme';
 
 type Screen = { name: 'home' } | { name: 'player'; index: number };
 
-const logo = require('../assets/icon.png');
+const props = {
+  ball: require('../assets/props/ball.png'),
+  bone: require('../assets/props/bone.png'),
+  cushion: require('../assets/props/cushion.png'),
+  house: require('../assets/props/house.png'),
+  logo: require('../assets/props/logo.png'),
+};
 
 export default function App() {
   const [day, setDay] = useState<Day | null>(null);
@@ -79,43 +85,74 @@ export default function App() {
   return <Home day={day} error={error} onPlay={() => setScreen({ name: 'player', index: 0 })} onRetry={refresh} />;
 }
 
-function Home({ day, error, onPlay, onRetry }: { day: Day | null; error: string | null; onPlay: () => void; onRetry: () => void }) {
+function Board({ blob, title, children, art }: { blob: string; title: [string, string]; children: React.ReactNode; art: React.ReactNode }) {
   return (
-    <View style={s.home}>
+    <View style={s.page}>
       <StatusBar hidden />
-      <Image source={logo} style={s.logo} />
-      <Text style={s.h1}>{day ? `${day.pet.name}'s Day` : 'Pawzoo'}</Text>
-      {error ? (
-        <>
-          <Text style={s.muted}>Can't reach the Pawzoo server. {error}</Text>
-          <FocusButton label="Try Again" onPress={onRetry} preferred />
-        </>
-      ) : (
-        <>
-          {(day?.summary.highlights.length ? day.summary.highlights : ['Nothing on camera yet today.']).map((h) => (
-            <Text key={h} style={s.highlight}>
-              {h}
-            </Text>
-          ))}
-          {day?.reel.chapters.length ? <FocusButton label="Play the Day" onPress={onPlay} preferred /> : null}
-        </>
-      )}
+      <View style={s.board}>
+        <View style={[s.blob, { backgroundColor: blob }]} />
+        <View style={s.display}>
+          <Text style={s.displayText}>{title[0]}</Text>
+          <Text style={s.displayText}>{title[1]}</Text>
+        </View>
+        {art}
+        <View style={s.side}>{children}</View>
+      </View>
     </View>
   );
 }
 
-function FocusButton({ label, onPress, preferred }: { label: string; onPress: () => void; preferred?: boolean }) {
+function Home({ day, error, onPlay, onRetry }: { day: Day | null; error: string | null; onPlay: () => void; onRetry: () => void }) {
+  const rows = day?.summary.highlights.length ? day.summary.highlights : ['Nothing on camera yet today.'];
+  return (
+    <Board
+      blob={color.violet}
+      title={[day ? `${day.pet.name}'s` : 'Pawzoo', 'Day']}
+      art={
+        <>
+          <Image source={props.ball} style={[s.prop, { left: '30%', top: '44%', width: '19%' }]} />
+          <Image source={props.bone} style={[s.prop, s.soft, { left: '5%', top: '66%', width: '12%' }]} blurRadius={6} />
+          <Image source={props.cushion} style={[s.prop, s.soft, { left: '34%', top: '3%', width: '9%' }]} blurRadius={6} />
+          <Image source={props.logo} style={s.avatar} />
+        </>
+      }
+    >
+      <Text style={s.kicker}>TODAY ON CAMERA</Text>
+      <Text style={s.title}>{'What she\ngot up to'}</Text>
+      {error ? (
+        <>
+          <Text style={s.row}>Can't reach the Pawzoo server. {error}</Text>
+          <PlayButton label="Try Again" onPress={onRetry} />
+        </>
+      ) : (
+        <>
+          {rows.map((h, i) => (
+            <Text key={h} style={[s.row, i % 2 === 0 && s.rowBand]}>
+              {h}
+            </Text>
+          ))}
+          {day?.reel.chapters.length ? <PlayButton label="Play the Day" onPress={onPlay} /> : null}
+        </>
+      )}
+    </Board>
+  );
+}
+
+function PlayButton({ label, onPress }: { label: string; onPress: () => void }) {
   const [focused, setFocused] = useState(false);
   return (
     <Pressable
-      hasTVPreferredFocus={preferred}
+      hasTVPreferredFocus
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       onPress={onPress}
-      style={[s.button, focused && s.buttonFocused]}
+      style={[s.play, focused && s.playFocused]}
       accessibilityRole="button"
     >
-      <Text style={s.buttonText}>{label}</Text>
+      <Text style={s.playText}>{label}</Text>
+      <View style={s.playDot}>
+        <Text style={s.playIcon}>{'\u25B6'}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -196,7 +233,7 @@ function ChapterTile({ chapter, active, preferred, onPress }: { chapter: Chapter
       style={[s.tile, (focused || active) && s.tileOn]}
     >
       <Image source={{ uri: media(chapter.snapshot) }} style={s.thumb} />
-      <Text style={s.tileTime}>{chapter.time}</Text>
+      <Text style={s.tileTime}>{chapter.time.toUpperCase()}</Text>
       <Text style={s.tileCaption} numberOfLines={2}>
         {chapter.caption}
       </Text>
@@ -204,44 +241,49 @@ function ChapterTile({ chapter, active, preferred, onPress }: { chapter: Chapter
   );
 }
 
-function AlertScreen({ message, snapshot, petName }: { message: string; snapshot: string; petName: string }) {
+function AlertScreen({ message, snapshot }: { message: string; snapshot: string; petName: string }) {
   return (
-    <View style={s.alert}>
-      <StatusBar hidden />
-      <View style={s.alertMedia}>{snapshot ? <Image source={{ uri: media(snapshot) }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}</View>
-      <View style={s.alertText}>
-        <Text style={s.alertTitle}>{petName} Is Outside</Text>
-        <Text style={s.alertBody}>{message}</Text>
-        <Text style={s.muted}>Say "She's back inside" when she's home.</Text>
-      </View>
-    </View>
+    <Board blob={color.coral} title={["She's", 'Out']} art={<Image source={props.house} style={[s.prop, { left: '30%', top: '44%', width: '18%' }]} />}>
+      <Text style={s.kicker}>FRONT DOOR CAMERA</Text>
+      <View style={s.still}>{snapshot ? <Image source={{ uri: media(snapshot) }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}</View>
+      <Text style={s.alertBody}>{message}</Text>
+      <Text style={s.hint}>Say "She's back inside" when she's home.</Text>
+    </Board>
   );
 }
 
 const s = StyleSheet.create({
-  home: { flex: 1, backgroundColor: color.bg, alignItems: 'center', justifyContent: 'center', padding: 48 },
-  logo: { width: 84, height: 84, borderRadius: 42, marginBottom: 20 },
-  h1: { color: color.ink, fontSize: 56, fontWeight: '700', marginBottom: 18 },
-  highlight: { color: color.muted, fontSize: 24, marginVertical: 4, textAlign: 'center' },
-  muted: { color: color.muted, fontSize: 20, marginTop: 16, textAlign: 'center' },
-  button: { marginTop: 28, backgroundColor: color.accent, borderRadius: 999, paddingVertical: 14, paddingHorizontal: 36, borderWidth: 4, borderColor: 'transparent' },
-  buttonFocused: { borderColor: color.ink, transform: [{ scale: 1.06 }] },
-  buttonText: { color: color.bg, fontSize: 24, fontWeight: '700' },
-  player: { flex: 1, backgroundColor: color.bg },
-  frame: { flex: 1, backgroundColor: '#000' },
-  overlay: { position: 'absolute', left: 48, bottom: 28, right: 48 },
-  caption: { alignSelf: 'flex-start', color: '#fff', fontSize: 34, fontWeight: '600', backgroundColor: color.overlay, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10 },
-  meta: { alignSelf: 'flex-start', color: '#e7dccf', fontSize: 18, marginTop: 6, backgroundColor: color.overlay, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
-  rail: { flexGrow: 0, backgroundColor: color.surface },
+  page: { flex: 1, backgroundColor: color.page, alignItems: 'center', justifyContent: 'center' },
+  board: { width: '86%', height: '80%', backgroundColor: color.board, borderRadius: 40, overflow: 'hidden', elevation: 18 },
+  blob: { position: 'absolute', left: 0, top: 0, width: '46%', height: '80%', borderTopLeftRadius: 40, borderTopRightRadius: 150, borderBottomRightRadius: 220 },
+  display: { position: 'absolute', left: '9%', top: '22%' },
+  displayText: { color: '#ffffff', fontSize: 84, fontWeight: '800', lineHeight: 84, letterSpacing: -1.5 },
+  prop: { position: 'absolute', aspectRatio: 1, height: undefined, resizeMode: 'contain' },
+  soft: { opacity: 0.85 },
+  avatar: { position: 'absolute', right: '5%', top: '9%', width: 48, height: 48 },
+  side: { position: 'absolute', left: '54%', right: '5%', top: '10%', bottom: '10%' },
+  kicker: { color: color.muted, fontSize: 13, letterSpacing: 2.4, marginBottom: 8 },
+  title: { color: color.ink, fontSize: 34, lineHeight: 40, marginBottom: 22 },
+  row: { color: color.ink, fontSize: 20, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14 },
+  rowBand: { backgroundColor: color.band },
+  play: { marginTop: 'auto', alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: color.press, borderRadius: 999, paddingVertical: 8, paddingLeft: 26, paddingRight: 8, borderWidth: 4, borderColor: 'transparent' },
+  playFocused: { borderColor: color.violet, transform: [{ scale: 1.05 }] },
+  playText: { color: color.pressInk, fontSize: 22, fontWeight: '500' },
+  playDot: { width: 46, height: 46, borderRadius: 23, backgroundColor: color.pressInk, alignItems: 'center', justifyContent: 'center' },
+  playIcon: { color: color.ink, fontSize: 18, marginLeft: 3 },
+  player: { flex: 1, backgroundColor: '#000' },
+  frame: { flex: 1 },
+  overlay: { position: 'absolute', left: 48, bottom: 28, alignItems: 'flex-start', gap: 8 },
+  caption: { color: color.ink, fontSize: 28, fontWeight: '500', backgroundColor: color.board, paddingHorizontal: 18, paddingVertical: 6, borderRadius: 999 },
+  meta: { color: '#ffffff', fontSize: 16, backgroundColor: color.overlay, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 },
+  rail: { flexGrow: 0, backgroundColor: color.page },
   railContent: { paddingHorizontal: 40, paddingVertical: 18, gap: 16 },
-  tile: { width: 280, padding: 6, borderRadius: 16, borderWidth: 4, borderColor: 'transparent' },
-  tileOn: { borderColor: color.accent },
-  thumb: { width: '100%', aspectRatio: 16 / 9, borderRadius: 10, backgroundColor: color.raised },
-  tileTime: { color: color.muted, fontSize: 15, marginTop: 6 },
-  tileCaption: { color: color.ink, fontSize: 17 },
-  alert: { flex: 1, backgroundColor: color.warnBg, flexDirection: 'row', alignItems: 'center', padding: 64, gap: 48 },
-  alertMedia: { flex: 1.2, aspectRatio: 16 / 9, borderRadius: 18, borderWidth: 5, borderColor: color.warn, overflow: 'hidden', backgroundColor: '#000' },
-  alertText: { flex: 1 },
-  alertTitle: { color: color.warn, fontSize: 52, fontWeight: '700', marginBottom: 16 },
-  alertBody: { color: color.ink, fontSize: 28, lineHeight: 38 },
+  tile: { width: 280, padding: 6, borderRadius: 20, borderWidth: 4, borderColor: 'transparent', backgroundColor: color.board },
+  tileOn: { borderColor: color.press },
+  thumb: { width: '100%', aspectRatio: 16 / 9, borderRadius: 14, backgroundColor: color.band },
+  tileTime: { color: color.muted, fontSize: 12, letterSpacing: 1.6, marginTop: 6, paddingHorizontal: 4 },
+  tileCaption: { color: color.ink, fontSize: 16, paddingHorizontal: 4, paddingBottom: 4 },
+  still: { width: '100%', aspectRatio: 16 / 9, borderRadius: 18, overflow: 'hidden', backgroundColor: '#000', marginBottom: 18 },
+  alertBody: { color: color.ink, fontSize: 24, lineHeight: 32 },
+  hint: { color: color.muted, fontSize: 18, marginTop: 14 },
 });

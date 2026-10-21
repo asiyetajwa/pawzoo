@@ -59,7 +59,7 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
     },
   );
 
-  const cardMeta = { ui: { csp: { resourceDomains: [PUBLIC_URL] }, prefersBorder: false } };
+  const cardMeta = { ui: { csp: { resourceDomains: [PUBLIC_URL, 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'] }, prefersBorder: false } };
   registerAppResource(server, 'Pawzoo card', CARD_URI, { description: 'Cards for Pawzoo answers', _meta: cardMeta }, async () => ({
     contents: [{ uri: CARD_URI, mimeType: RESOURCE_MIME_TYPE, text: await readFile(cardHtmlPath, 'utf8'), _meta: cardMeta }],
   }));
