@@ -70,9 +70,9 @@ No accounts or credentials are needed.
 
 ### Amazon Bedrock
 
-- **Used for:** the spoken evening digest and the simulator's tool selection from the live MCP tools/list, both through the Converse API, with `openai.gpt-5.6-luna`.
+- **Used for:** the spoken evening digest and the simulator's tool selection from the live MCP tools/list, both through the Converse API, with Amazon Nova 2 Lite (`us.amazon.nova-2-lite-v1:0`, a US cross-region inference profile).
 - **Worked well:** one API (Converse, with tool use) for any model, so changing models is one environment variable.
-- **Needs work:** some models reject `temperature` with a ValidationException; we retry without it. A per-model list of supported inference parameters in the Converse docs would save a round trip. **TODO** (Brian): model access request experience and the latency you saw in `npm run check:aws`.
+- **Needs work:** models differ in what they accept: some reject `temperature` (we retry without it) and we strip the `$schema` keyword from MCP tool schemas before passing them as Converse tools. A per-model list of supported inference parameters and JSON Schema keywords in the Converse docs would save trial and error. **TODO** (Brian): model access request experience and the latency you saw in `npm run check:aws`.
 
 ### Amazon DynamoDB
 

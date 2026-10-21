@@ -59,3 +59,13 @@ Kept as we built, in the format the hackathon asks for. Severity: Blocker, High,
 - **Severity:** Low.
 - **Workaround:** None needed functionally; we note it so judges don't read it as a bug.
 - **Suggestion:** Let the client skip the standalone GET when the server advertises no server-initiated messages, or have stateless servers say so in `initialize`.
+
+## 7. MCP tool schemas as Bedrock Converse tools
+
+- **Task:** Hand the live MCP `tools/list` to Bedrock Converse as `toolConfig.tools`, so the model picks Pawzoo tools.
+- **Steps:** Mapped each MCP tool's `inputSchema` to `toolSpec.inputSchema.json`.
+- **Expected:** MCP and Converse both use JSON Schema, so a straight copy.
+- **Actual:** MCP SDK v2 schemas carry `"$schema": "https://json-schema.org/draft/2020-12/schema"`. Which keywords each Bedrock model accepts in tool schemas is not documented per model, so we could not tell in advance whether a model would reject it.
+- **Severity:** Medium (a rejection silently drops the assistant to its offline rules).
+- **Workaround:** Strip `$schema` before sending; a test asserts it.
+- **Suggestion:** Document accepted JSON Schema keywords for Converse tools per model, or have Converse ignore `$schema`. A first-class "MCP tools to Converse tools" helper in the AWS SDK would remove the guesswork.

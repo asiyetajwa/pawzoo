@@ -35,7 +35,7 @@ before(async () => {
   process.env.AWS_REGION = 'us-east-1';
   process.env.AWS_ACCESS_KEY_ID = 'test';
   process.env.AWS_SECRET_ACCESS_KEY = 'test';
-  process.env.BEDROCK_MODEL_ID = 'openai.gpt-5.6-luna';
+  process.env.BEDROCK_MODEL_ID = 'test.reasoning-model-v1:0';
   delete process.env.PAWZOO_BEDROCK;
 });
 
@@ -48,18 +48,23 @@ test('digest retries without temperature and ignores reasoning blocks', async ()
   const state = initialState('2026-10-22');
   const out = await writeDigest(daySummary(state, '2026-10-22', new Date('2026-10-23T00:00:00Z')));
   assert.equal(out.source, 'bedrock');
-  assert.equal(out.modelId, 'openai.gpt-5.6-luna');
+  assert.equal(out.modelId, 'test.reasoning-model-v1:0');
   assert.equal(out.text, 'Biscuit had a lovely day.');
   assert.equal(seen.length, 2, 'one rejected call, one retry');
   assert.equal(seen[1].inferenceConfig.temperature, undefined);
-  assert.match(String(seen[1].path), /openai\.gpt-5\.6-luna\/converse/);
+  assert.match(String(seen[1].path), /test\.reasoning-model-v1(:|%3A)0\/converse/);
 });
 
 test('assistant picks tools through Bedrock', async () => {
   const { assistantTurn } = await import('../src/assistant.js');
-  const plan = await assistantTurn("How was Biscuit's day?", [{ name: 'get_pet_day', description: 'day', inputSchema: { type: 'object', properties: {} } }], []);
+  const plan = await assistantTurn(
+    "How was Biscuit's day?",
+    [{ name: 'get_pet_day', description: 'day', inputSchema: { $schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object', properties: {} } }],
+    [],
+  );
   assert.equal(plan.source, 'bedrock');
-  assert.equal(plan.modelId, 'openai.gpt-5.6-luna');
+  assert.equal(plan.modelId, 'test.reasoning-model-v1:0');
+  assert.equal(seen[2].toolConfig.tools[0].toolSpec.inputSchema.json.$schema, undefined, 'the $schema keyword is stripped');
   assert.deepEqual(plan.calls.map((c) => c.name), ['get_pet_day']);
   assert.equal(seen.length, 3, 'the model is remembered: no second rejected call');
 });

@@ -79,6 +79,12 @@ Money or bookings: first call the quote_ tool; call confirm_action only when the
 To act on earlier results use these placeholders exactly: "$first_moment" (an event_id), "$recommended_slot" (a slot_id), "$open_alert" (an alert_id), "$last_walk" (a walk_id).
 Use at most two tools. Never give medical or veterinary advice.`;
 
+/** MCP tool schemas carry a "$schema" keyword some Bedrock models reject; the rest passes through. */
+export function toolSchema(schema: Record<string, unknown> | undefined): Record<string, unknown> {
+  const { $schema: _dialect, ...rest } = schema ?? { type: 'object', properties: {} };
+  return rest;
+}
+
 export async function planWithBedrock(utterance: string, tools: McpToolSummary[], history: unknown): Promise<AssistantPlan | null> {
   if (!bedrockModel() || !tools.length) return null;
   try {
@@ -88,7 +94,7 @@ export async function planWithBedrock(utterance: string, tools: McpToolSummary[]
           toolSpec: {
             name: t.name,
             description: (t.description ?? t.name).slice(0, 600),
-            inputSchema: { json: (t.inputSchema ?? { type: 'object', properties: {} }) as never },
+            inputSchema: { json: toolSchema(t.inputSchema) as never },
           },
         }),
       ),
