@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-views/
+data/
+*.log
+.env
+web/dist/
+tv/android/app/build/
+tv/node_modules/
+animation/out/
