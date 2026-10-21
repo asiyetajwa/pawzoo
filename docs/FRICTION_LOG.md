@@ -49,3 +49,13 @@ Kept as we built, in the format the hackathon asks for. Severity: Blocker, High,
 - **Severity:** Low.
 - **Workaround:** A small typed client in `server/src/ring.ts`.
 - **Suggestion:** A thin official TypeScript client with webhook verification built in.
+
+## 6. A stateless MCP server makes every browser host log an error
+
+- **Task:** Run the Pawzoo MCP server stateless (state lives in our store) and connect from a browser MCP client.
+- **Steps:** `createMcpHandler(factory)` with the default stateless legacy leg; `StreamableHTTPClientTransport` in the browser.
+- **Expected:** A quiet connection.
+- **Actual:** After `initialize`, the client opens the optional standalone GET stream; the stateless server answers `405 Method Not Allowed`, as the spec allows. The client handles it, but the browser console shows a failed request on every page load.
+- **Severity:** Low.
+- **Workaround:** None needed functionally; we note it so judges don't read it as a bug.
+- **Suggestion:** Let the client skip the standalone GET when the server advertises no server-initiated messages, or have stateless servers say so in `initialize`.

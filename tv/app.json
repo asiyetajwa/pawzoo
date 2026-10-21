@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Pawzoo",
+    "slug": "pawzoo-tv",
+    "version": "0.1.0",
+    "orientation": "landscape",
+    "backgroundColor": "#15110e",
+    "newArchEnabled": false,
+    "android": {
+      "package": "com.pawzoo.tv"
+    },
+    "extra": {
+      "serverUrl": "http://10.0.2.2:8787"
+    },
+    "plugins": [
+      "./plugins/withKotlinJvmTarget",
+      [
+        "@react-native-tvos/config-tv",
+        {
+          "androidTVBanner": "./assets/banner.png"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.0.21",
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 24,
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      [
+        "react-native-video",
+        {
+          "enableNotificationControls": false,
+          "enableBackgroundAudio": false,
+          "enableADSExtension": false,
+          "enableCacheExtension": false
+        }
+      ]
+    ]
+  }
+}

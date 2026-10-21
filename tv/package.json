@@ -1,0 +1,31 @@
+{
+  "name": "@pawzoo/tv",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Pawzoo for Fire TV (Fire OS): the dog's day on the big screen",
+  "main": "index.js",
+  "scripts": {
+    "start": "EXPO_TV=1 expo start",
+    "prebuild": "EXPO_TV=1 expo prebuild --platform android --clean",
+    "android": "EXPO_TV=1 expo run:android",
+    "apk": "cd android && ./gradlew assembleRelease",
+    "typecheck": "tsc --noEmit",
+    "ios": "expo run:ios"
+  },
+  "dependencies": {
+    "expo": "~54.0.0",
+    "expo-build-properties": "~1.0.0",
+    "expo-constants": "~18.0.14",
+    "expo-status-bar": "~3.0.0",
+    "react": "19.1.0",
+    "react-native": "npm:react-native-tvos@0.81.5-2",
+    "react-native-video": "^6.8.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@react-native-tvos/config-tv": "^0.1.0",
+    "@types/react": "~19.1.0",
+    "typescript": "~5.9.0"
+  }
+}
