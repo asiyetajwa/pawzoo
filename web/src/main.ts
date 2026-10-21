@@ -173,6 +173,8 @@ async function showCard(toolName: string, args: Any, result: Any): Promise<void>
   // A tap on a card button is a tool call too: remember what it returns, and say it.
   bridge.oncalltool = async (params) => {
     const out = (await client.callTool(params)) as Any;
+    // A tap on the card is a new exchange: the screen shows only its answer.
+    transcript.innerHTML = '';
     remember(params.name, out);
     const scene = sceneFor(params.name, out);
     if (scene) setScene(scene);
@@ -375,6 +377,8 @@ function listen(): void {
       banner.textContent = p.alert.message;
       setScene('alert');
       setLight('alert');
+      transcript.innerHTML = '';
+      cardHost.innerHTML = '';
       say(`Heads up. ${p.alert.message} It's on the TV now.`);
     }
   };

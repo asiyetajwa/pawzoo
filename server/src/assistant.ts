@@ -47,7 +47,7 @@ export function planWithRules(utterance: string): AssistantPlan {
   }
 
   if (/groom|bath|haircut|nails/i.test(u)) {
-    if (/\bbook\b/i.test(u) && /that|it|the first|recommended/i.test(u)) return plan([{ name: 'quote_booking', arguments: { slot_id: '$recommended_slot' } }]);
+    if (/\bbook\b/i.test(u) && /\b(that|it|the first one|recommended)\b/i.test(u)) return plan([{ name: 'quote_booking', arguments: { slot_id: '$recommended_slot' } }]);
     return plan([{ name: 'find_care_slots', arguments: { service: 'grooming' } }]);
   }
   if (/\bvet|check-?up/i.test(u)) return plan([{ name: 'find_care_slots', arguments: { service: 'vet_checkup' } }]);

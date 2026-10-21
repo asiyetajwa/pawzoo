@@ -306,12 +306,14 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
     },
   );
 
-  server.registerTool(
+  registerAppTool(
+    server,
     'remember',
     {
       title: 'Remember',
       description: "Remembers something about the dog for later, like 'she's on two and a half cups a day now' or 'Saturday mornings are calmer at the groomer'. Feeding amounts update the food forecast.",
       inputSchema: z.object({ fact: z.string().min(3) }),
+      _meta: CARD_META,
     },
     async ({ fact }) => {
       const now = rt.now();
@@ -319,10 +321,10 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
         const r = remember(s, fact, now);
         return { result: r, food: r.updatedDailyCups ? foodProjection(s, now) : null };
       });
-      const say = food
-        ? `Got it, ${result.updatedDailyCups} cups a day. At that rate her food lasts until ${food.runsOutDay}.`
-        : "Got it, I'll remember that.";
-      return { content: [{ type: 'text' as const, text: say }], structuredContent: { say, food } };
+      if (food) {
+        return reply(`Got it, ${result.updatedDailyCups} cups a day. At that rate her food lasts until ${food.runsOutDay}.`, { card: 'food', food, remembered: fact });
+      }
+      return reply("Got it, I'll remember that.", { card: 'done', remembered: fact });
     },
   );
 
