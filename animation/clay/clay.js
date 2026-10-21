@@ -626,6 +626,18 @@ const SCENES = {
     at(cast.dana, 3.4, 0.6, -0.2);
     return ['', ''];
   },
+  hero(t) {
+    useRoom('living');
+    show(['biscuit', 'dana', 'maya']);
+    frame(0.6, 1.8, 0.6, 9.4);
+    poseBiscuit(cast.biscuit, 'sit', t);
+    at(cast.biscuit, 0.8, 1.6, 0.4);
+    posePerson(cast.maya, 'stand', t);
+    at(cast.maya, -1.2, 1.4, 0.5);
+    posePerson(cast.dana, 'stand', t);
+    at(cast.dana, 2.6, 0.2, -0.3);
+    return ['', ''];
+  },
   portrait(t) {
     useRoom('living');
     show(['biscuit']);

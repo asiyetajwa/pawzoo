@@ -2,18 +2,30 @@
   "expo": {
     "name": "Pawzoo",
     "slug": "pawzoo-tv",
-    "version": "0.1.0",
-    "orientation": "landscape",
+    "version": "0.2.0",
+    "orientation": "default",
     "backgroundColor": "#15110e",
     "newArchEnabled": false,
     "android": {
-      "package": "com.pawzoo.tv"
+      "package": "com.pawzoo.tv",
+      "versionCode": 2
     },
     "extra": {
       "serverUrl": "http://10.0.2.2:8787"
     },
     "plugins": [
       "./plugins/withKotlinJvmTarget",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Outfit-Regular.ttf",
+            "./assets/fonts/Outfit-Medium.ttf",
+            "./assets/fonts/Outfit-SemiBold.ttf",
+            "./assets/fonts/Outfit-ExtraBold.ttf"
+          ]
+        }
+      ],
       [
         "@react-native-tvos/config-tv",
         {

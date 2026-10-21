@@ -1,6 +1,6 @@
 {
   "name": "@pawzoo/tv",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "license": "MIT",
   "description": "Pawzoo for Fire TV (Fire OS): the dog's day on the big screen",
@@ -14,10 +14,12 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
     "babel-preset-expo": "~54.0.10",
     "expo": "~54.0.0",
     "expo-build-properties": "~1.0.0",
     "expo-constants": "~18.0.14",
+    "expo-font": "~14.0.12",
     "expo-status-bar": "~3.0.0",
     "react": "19.1.0",
     "react-native": "npm:react-native-tvos@0.81.5-2",

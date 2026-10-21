@@ -4,6 +4,7 @@
 import './env.js';
 import express from 'express';
 import { existsSync } from 'node:fs';
+import { networkInterfaces } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createMcpHandler } from '@modelcontextprotocol/server';
@@ -165,7 +166,17 @@ app.use('/media', express.static(mediaDir, { maxAge: '1h' }));
 if (existsSync(webDir)) app.use(express.static(webDir));
 
 const port = Number(process.env.PORT ?? 8787);
-const host = process.env.HOST ?? '127.0.0.1';
+// --lan (npm run start:tv) listens on the network so a Fire TV or phone on the same Wi-Fi can connect.
+const lan = process.argv.includes('--lan');
+const host = lan ? '0.0.0.0' : (process.env.HOST ?? '127.0.0.1');
+
+/** This computer's Wi-Fi and Ethernet addresses, for the TV app's Connect screen. */
+function lanAddresses(): string[] {
+  return Object.values(networkInterfaces())
+    .flat()
+    .filter((a): a is NonNullable<typeof a> => Boolean(a && a.family === 'IPv4' && !a.internal))
+    .map((a) => a.address);
+}
 
 if (process.env.PAWZOO_NO_LISTEN !== '1') {
   const server = app.listen(port, host, async () => {
@@ -177,6 +188,14 @@ if (process.env.PAWZOO_NO_LISTEN !== '1') {
     console.log(`Pawzoo on http://${host}:${port}  (MCP: /mcp, store: ${rt.store.kind}, demo date ${rt.demoDate})`);
     console.log(`Bedrock: ${bedrockModel() ?? 'off (template answers)'}${bedrockModel() ? ` in ${process.env.AWS_REGION ?? 'the default region'}` : ''}`);
     console.log(`Voice: ${voiceConfig().enabled ? `ElevenLabs (voice ${voiceConfig().voiceId})` : 'off (set ELEVENLABS_API_KEY in .env)'}`);
+    if (host === '0.0.0.0') {
+      const addresses = lanAddresses();
+      console.log(
+        addresses.length
+          ? `Fire TV app: open Connect and type ${addresses.map((a) => `${a}:${String(port)}`).join(' or ')}`
+          : 'Fire TV app: no network address found. Is this computer on Wi-Fi?',
+      );
+    }
   });
   server.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {

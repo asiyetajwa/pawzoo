@@ -46,7 +46,7 @@ await page.waitForFunction(() => window.ready === true, null, { timeout: 60_000 
 const stage = page.locator('#stage');
 const draw = (n, t) => page.evaluate(([a, b]) => window.draw(a, b), [n, t]);
 
-const all = await page.evaluate(() => window.SCENES.filter((s) => s !== 'sheet' && s !== 'portrait'));
+const all = await page.evaluate(() => window.SCENES.filter((s) => !['sheet', 'portrait', 'hero'].includes(s)));
 const wanted = process.argv.slice(2).length ? process.argv.slice(2) : all;
 
 if (stills) {
