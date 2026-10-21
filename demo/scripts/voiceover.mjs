@@ -15,8 +15,8 @@ const apiKey = process.env.ELEVENLABS_API_KEY;
 if (!apiKey) throw new Error('ELEVENLABS_API_KEY is not set');
 const film = process.argv[2] ?? 'pawzoo';
 if (!/^[a-z]+$/.test(film)) throw new Error(`Unknown film "${film}"`);
-// Default: "Amelia", the voice of the Dribble product films. Override with ELEVENLABS_VOICE_ID.
-const voiceId = process.env.ELEVENLABS_VOICE_ID ?? 'ZF6FPAbjXT4488VcRRnw';
+// Pawzoo uses "Jessica" (warm, cheerful, American) from the ElevenLabs default library.
+const voiceId = process.env.ELEVENLABS_VOICE_ID ?? 'cgSgspJ2msm6clMCkdW9';
 const modelId = process.env.ELEVENLABS_MODEL_ID ?? 'eleven_multilingual_v2';
 
 // Pull the scene list straight from the TypeScript source so the script stays

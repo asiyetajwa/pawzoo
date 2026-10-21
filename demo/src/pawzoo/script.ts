@@ -12,13 +12,13 @@ export type SceneSpec = {
 };
 
 export const SCENES: SceneSpec[] = [
-  { id: 'intro', voiceover: 'Meet Pawzoo, for Alexa plus.', minSeconds: 2.8 },
-  { id: 'day', voiceover: "Ask how your dog's day went. Pawzoo reads your Ring cameras and answers in a sentence.", minSeconds: 5.6 },
-  { id: 'walk', voiceover: 'It checks the dog walker against the front door camera. Thirty-five minutes, and only one short walk all week.', minSeconds: 6.2 },
-  { id: 'pay', voiceover: 'Pay and tip in a tap. Nothing is bought without your yes.', minSeconds: 5.6 },
-  { id: 'food', voiceover: 'It knows when the food runs out, and remembers what you tell it.', minSeconds: 6.4 },
-  { id: 'groom', voiceover: 'It books the groomer on the morning slot you said works best.', minSeconds: 4.8 },
-  { id: 'tv', voiceover: 'At night, the family watches the whole day on Fire TV.', minSeconds: 5.4 },
-  { id: 'alert', voiceover: 'And if she ever slips out alone, every screen knows at once.', minSeconds: 5.2 },
-  { id: 'outro', voiceover: 'Pawzoo. Ring sees. Alexa plus acts. Fire TV shows.', minSeconds: 4.4 },
+  { id: 'intro', voiceover: 'This is Pawzoo. It turns your Ring cameras into a helper for your dog, right inside Alexa plus.', minSeconds: 4.4 },
+  { id: 'day', voiceover: "Just ask how Biscuit's day went. Pawzoo reads the day off your cameras and sums it up: her walk, her meals, and when her food runs out.", minSeconds: 6.4 },
+  { id: 'walk', voiceover: 'Tap the walk, and Pawzoo checks it against the front door camera. Dana kept her out for thirty-five minutes, and this week only Tuesday came up short.', minSeconds: 7.0 },
+  { id: 'pay', voiceover: 'Pay Dana and add a tip right from the card. Pawzoo shows you the total first, and nothing is paid until you say yes.', minSeconds: 6.4 },
+  { id: 'food', voiceover: "Running low on food? Pawzoo tracks the bag and offers a reorder before it's empty. Tell it she's eating less now, and the forecast updates.", minSeconds: 7.2 },
+  { id: 'groom', voiceover: 'Need grooming? It finds open slots and puts Saturday morning first, because you told it that is when Biscuit is calmest.', minSeconds: 5.6 },
+  { id: 'tv', voiceover: 'In the evening, the whole family can watch her day on Fire TV, one moment at a time.', minSeconds: 5.6 },
+  { id: 'alert', voiceover: 'And if Biscuit ever slips out the front door alone, Pawzoo speaks up right away, on your speaker and your TV.', minSeconds: 5.8 },
+  { id: 'outro', voiceover: 'Pawzoo. Ring sees, Alexa plus acts, and Fire TV shows.', minSeconds: 4.4 },
 ];

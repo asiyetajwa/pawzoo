@@ -5,8 +5,8 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-// Amelia, the voice of the Dribble product films. Override with ELEVENLABS_VOICE_ID.
-const DEFAULT_VOICE = 'ZF6FPAbjXT4488VcRRnw';
+// Jessica (warm, cheerful, American), the voice of the Pawzoo film. Override with ELEVENLABS_VOICE_ID.
+const DEFAULT_VOICE = 'cgSgspJ2msm6clMCkdW9';
 const DEFAULT_MODEL = 'eleven_flash_v2_5';
 
 export function voiceConfig(): { enabled: boolean; voiceId: string; modelId: string } {

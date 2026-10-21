@@ -52,7 +52,7 @@ const voiceKey = process.env.ELEVENLABS_API_KEY?.trim();
 if (!voiceKey) console.log('  --    ElevenLabs not set (answers are shown, not spoken). Add ELEVENLABS_API_KEY to .env.');
 else {
   // A two-word line: what Pawzoo actually uses, at almost no cost in characters.
-  const voice = process.env.ELEVENLABS_VOICE_ID?.trim() || 'ZF6FPAbjXT4488VcRRnw';
+  const voice = process.env.ELEVENLABS_VOICE_ID?.trim() || 'cgSgspJ2msm6clMCkdW9';
   try {
     const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}`, {
       method: 'POST',
