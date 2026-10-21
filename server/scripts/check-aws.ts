@@ -51,12 +51,19 @@ else {
 const voiceKey = process.env.ELEVENLABS_API_KEY?.trim();
 if (!voiceKey) console.log('  --    ElevenLabs not set (answers are shown, not spoken). Add ELEVENLABS_API_KEY to .env.');
 else {
+  // A two-word line: what Pawzoo actually uses, at almost no cost in characters.
+  const voice = process.env.ELEVENLABS_VOICE_ID?.trim() || 'ZF6FPAbjXT4488VcRRnw';
   try {
-    const res = await fetch('https://api.elevenlabs.io/v1/user/subscription', { headers: { 'xi-api-key': voiceKey }, signal: AbortSignal.timeout(10_000) });
-    if (!res.ok) bad(`ElevenLabs: HTTP ${res.status} ${(await res.text()).slice(0, 160)}`);
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}`, {
+      method: 'POST',
+      headers: { 'xi-api-key': voiceKey, 'content-type': 'application/json', accept: 'audio/mpeg' },
+      body: JSON.stringify({ text: 'Pawzoo ready.', model_id: process.env.ELEVENLABS_MODEL_ID?.trim() || 'eleven_flash_v2_5' }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (res.ok) ok(`ElevenLabs spoke a test line (${String((await res.arrayBuffer()).byteLength)} bytes of audio)`);
     else {
-      const sub = (await res.json()) as { tier?: string; character_count?: number; character_limit?: number };
-      ok(`ElevenLabs key works (${sub.tier ?? 'plan'}: ${sub.character_count ?? '?'} of ${sub.character_limit ?? '?'} characters used)`);
+      const body = (await res.json().catch(() => ({}))) as { detail?: { message?: string } };
+      bad(`ElevenLabs: HTTP ${res.status} ${body.detail?.message ?? ''} In elevenlabs.io > API Keys, give this key the Text to Speech permission.`);
     }
   } catch (err) {
     bad(`ElevenLabs: ${(err as Error).message}`);
