@@ -215,8 +215,8 @@ async function turn(utterance: string): Promise<void> {
         history: history.slice(-6),
       }),
     })
-  ).json()) as { calls: Array<{ name: string; arguments: Any }>; say?: string; source: string };
-  $('#brain').textContent = plan.source === 'bedrock' ? 'Amazon Bedrock' : 'rules (offline)';
+  ).json()) as { calls: Array<{ name: string; arguments: Any }>; say?: string; source: string; modelId?: string };
+  $('#brain').textContent = plan.source === 'bedrock' ? `Amazon Bedrock (${plan.modelId ?? 'model'})` : 'rules (offline)';
 
   if (!plan.calls.length) {
     say(plan.say ?? 'Sorry, I missed that.');
@@ -231,6 +231,10 @@ async function turn(utterance: string): Promise<void> {
     }
     const result = (await client.callTool({ name: call.name, arguments: args })) as Any;
     remember(call.name, result);
+    if (call.name === 'get_pet_day') {
+      const sc = result.structuredContent ?? {};
+      $('#digest').textContent = sc.digestSource === 'bedrock' ? `Amazon Bedrock (${sc.digestModel})` : 'template (Bedrock off or failed)';
+    }
     const scene = sceneFor(call.name, result);
     if (scene) setScene(scene);
     const line = result.structuredContent?.say ?? result.content?.[0]?.text ?? '';
@@ -381,6 +385,8 @@ async function boot(): Promise<void> {
     <dt>Protocol</dt><dd>${esc(client.getNegotiatedProtocolVersion())}</dd>
     <dt>Transport</dt><dd>Streamable HTTP</dd>
     <dt>Tools</dt><dd>${tools.length} (${tools.filter((t) => t._meta?.ui?.resourceUri).length} with MCP Apps cards)</dd>`;
+  const status = (await (await fetch('/api/status')).json()) as Any;
+  session.insertAdjacentHTML('beforeend', `<dt>State</dt><dd>${status.store === 'dynamodb' ? 'Amazon DynamoDB' : 'local file'}</dd><dt>Ring</dt><dd>${status.ring === 'live' ? 'live account' : 'replay'}</dd>`);
   listen();
   setLight('idle');
 }

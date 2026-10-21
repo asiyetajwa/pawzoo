@@ -3,7 +3,8 @@
 // With Bedrock configured, a model picks the tools from the live tools/list. Without it, a small
 // rule set does, so the simulator always works offline.
 
-import { BedrockRuntimeClient, ConverseCommand, type Tool } from '@aws-sdk/client-bedrock-runtime';
+import type { Tool } from '@aws-sdk/client-bedrock-runtime';
+import { bedrockModel, converse } from './bedrock.js';
 
 export interface PlannedCall {
   name: string;
@@ -14,6 +15,7 @@ export interface AssistantPlan {
   calls: PlannedCall[];
   say?: string;
   source: 'bedrock' | 'rules';
+  modelId?: string;
 }
 
 /** Values the browser fills in from earlier turns: the quote awaiting a yes, the last moments found, and so on. */
@@ -78,10 +80,8 @@ To act on earlier results use these placeholders exactly: "$first_moment" (an ev
 Use at most two tools. Never give medical or veterinary advice.`;
 
 export async function planWithBedrock(utterance: string, tools: McpToolSummary[], history: unknown): Promise<AssistantPlan | null> {
-  const modelId = process.env.BEDROCK_MODEL_ID;
-  if (!modelId || process.env.PAWZOO_BEDROCK === 'off' || !tools.length) return null;
+  if (!bedrockModel() || !tools.length) return null;
   try {
-    const client = new BedrockRuntimeClient(process.env.AWS_REGION ? { region: process.env.AWS_REGION } : {});
     const toolConfig = {
       tools: tools.map(
         (t): Tool => ({
@@ -95,15 +95,13 @@ export async function planWithBedrock(utterance: string, tools: McpToolSummary[]
     };
     const recent = Array.isArray(history) ? (history as Array<{ role: string; text: string }>).slice(-6) : [];
     const context = recent.map((h) => `${h.role}: ${h.text}`).join('\n');
-    const out = await client.send(
-      new ConverseCommand({
-        modelId,
+    const out = await converse(
+      {
         system: [{ text: SYSTEM }],
         messages: [{ role: 'user', content: [{ text: `${context ? `Conversation so far:\n${context}\n\n` : ''}Person: ${utterance}` }] }],
         toolConfig,
-        inferenceConfig: { maxTokens: 400, temperature: 0 },
-      }),
-      { abortSignal: AbortSignal.timeout(8000) },
+      },
+      { maxTokens: 1500, temperature: 0 },
     );
     const content = out.output?.message?.content ?? [];
     const calls = content
@@ -111,7 +109,7 @@ export async function planWithBedrock(utterance: string, tools: McpToolSummary[]
       .map((c) => ({ name: c.toolUse!.name!, arguments: (c.toolUse!.input ?? {}) as Record<string, unknown> }))
       .slice(0, 2);
     const say = content.map((c) => c.text ?? '').join('').trim() || undefined;
-    return { calls, say: calls.length ? undefined : say, source: 'bedrock' };
+    return { calls, say: calls.length ? undefined : say, source: 'bedrock', modelId: bedrockModel() ?? undefined };
   } catch (err) {
     console.warn('[assistant] Bedrock unavailable, using rules:', (err as Error).message);
     return null;

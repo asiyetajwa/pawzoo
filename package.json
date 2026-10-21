@@ -10,7 +10,10 @@
     "dev": "npm --prefix web run build && npm --prefix server run dev",
     "test": "npm --prefix server test",
     "typecheck": "npm --prefix server run typecheck && npm --prefix web run typecheck",
-    "placeholders": "node animation/placeholders.mjs"
+    "placeholders": "node animation/placeholders.mjs",
+    "check:aws": "npm --prefix server run check:aws"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  }
 }

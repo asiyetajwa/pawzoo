@@ -12,6 +12,7 @@ import { Runtime, type Push } from './runtime.js';
 import { storeFromEnv } from './store.js';
 import { dayReel, daySummary, foodProjection } from './agent.js';
 import { assistantTurn } from './assistant.js';
+import { bedrockModel } from './bedrock.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..', '..');
@@ -82,6 +83,10 @@ app.get('/api/clock', (_req, res) => {
   res.json({ now: rt.now().toISOString(), demoDate: rt.demoDate, pinned: rt.clock.isPinned() });
 });
 
+app.get('/api/status', (_req, res) => {
+  res.json({ store: rt.store.kind, bedrockModel: bedrockModel(), region: process.env.AWS_REGION ?? null, ring: rt.ring ? 'live' : 'replay' });
+});
+
 // The assistant brain behind the Alexa+ simulator: turns an utterance into tool calls.
 app.post('/api/assistant', async (req, res) => {
   const body = req.body as { utterance?: string; tools?: unknown; history?: unknown };
@@ -135,5 +140,6 @@ if (process.env.PAWZOO_NO_LISTEN !== '1') {
   app.listen(port, host, async () => {
     await rt.catchUp();
     console.log(`Pawzoo on http://${host}:${port}  (MCP: /mcp, store: ${rt.store.kind}, demo date ${rt.demoDate})`);
+    console.log(`Bedrock: ${bedrockModel() ?? 'off (template answers)'}${bedrockModel() ? ` in ${process.env.AWS_REGION ?? 'the default region'}` : ''}`);
   });
 }

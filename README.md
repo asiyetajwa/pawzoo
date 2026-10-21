@@ -23,6 +23,8 @@ npm run setup      # installs and builds the server and the web apps
 npm start          # http://127.0.0.1:8787
 ```
 
+Optional AWS: copy `.env.example` to `.env` and set `AWS_REGION`, `BEDROCK_MODEL_ID` and `PAWZOO_TABLE` (credentials come from your AWS CLI profile). `npm run check:aws` proves Bedrock and DynamoDB answer before you start. The "Under the Hood" panel then shows which model chose the tools and wrote the digest, and that state is in DynamoDB.
+
 Open:
 
 - **http://127.0.0.1:8787**: Pawzoo as an Alexa+ add-on on a screen device (simulated). Click a suggestion or the microphone (Chrome or Edge), or type. "Under the Hood" shows the live MCP traffic, Ring events and demo controls.
@@ -87,7 +89,7 @@ Biscuit and her house are original Pawzoo artwork drawn in code ([`animation/bis
 npm test
 ```
 
-Ten end-to-end tests drive the real server through a real MCP client over HTTP: protocol negotiation, the tool list and card, the walk checked against camera events, confirmation-gated payments and orders, memory changing the food forecast, slot ranking, Ring signature rejection, the escape alert reaching the TV, and the offline assistant.
+Twelve tests. Ten end-to-end tests drive the real server through a real MCP client over HTTP: protocol negotiation, the tool list and card, the walk checked against camera events, confirmation-gated payments and orders, memory changing the food forecast, slot ranking, Ring signature rejection, the escape alert reaching the TV, and the offline assistant. Two more run the Bedrock path against a local stand-in for the Converse API, including models that reject `temperature`.
 
 ## Built With
 

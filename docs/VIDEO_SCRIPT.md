@@ -24,4 +24,4 @@ Notes:
 - Keep narration to about 380 words for 2:45.
 - On screen, the simulator says "Simulated Alexa+ add-on". Emerson Sklar confirmed on the Devpost forum that this wording is fine.
 - Source for the dog statistic: American Pet Products Association, 2026 State of the Industry report (53% of US households owned a dog in 2025), as reported at https://www.petfoodindustry.com/pet-ownership-statistics/article/15747936 . Re-check before recording.
-- Scene 7 names Amazon Bedrock and DynamoDB. Only say it if the take was recorded with `BEDROCK_MODEL_ID` and `PAWZOO_TABLE` set; the simulator shows "Assistant: Amazon Bedrock" when Bedrock is live. Otherwise cut that sentence.
+- Scene 7 names Amazon Bedrock and DynamoDB. Before recording, run `npm run check:aws` (both lines must say OK). During the take, "Under the Hood" must show "Assistant: Amazon Bedrock (...)", "Digest: Amazon Bedrock (...)" and "State: Amazon DynamoDB". If any says otherwise, cut that sentence.

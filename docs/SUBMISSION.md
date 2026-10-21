@@ -38,7 +38,7 @@ Pawzoo is a new project, started on October 21, 2026. Every file in the reposito
 1. Install Node.js 22+. `npm run setup`, then `npm start`.
 2. Open http://127.0.0.1:8787 and click "How Was Biscuit's Day?". Use "Under the Hood" to see MCP traffic and the demo controls (jump the clock, make the dog get out, reset).
 3. Open http://127.0.0.1:8787/tv.html for the TV in a browser, or install the APK from the repo's Releases on a Fire TV or the Android TV emulator.
-4. `npm test` runs ten end-to-end tests through a real MCP client.
+4. `npm test` runs twelve tests, ten of them end to end through a real MCP client.
 
 No accounts or credentials are needed.
 
@@ -70,8 +70,9 @@ No accounts or credentials are needed.
 
 ### Amazon Bedrock
 
-- **Used for:** the spoken evening digest (Converse API) and tool selection in the simulator from the live MCP tools/list.
-- **TODO** (Brian): model ID used, model access request experience, latency, anything that got in the way.
+- **Used for:** the spoken evening digest and the simulator's tool selection from the live MCP tools/list, both through the Converse API, with `openai.gpt-5.6-luna`.
+- **Worked well:** one API (Converse, with tool use) for any model, so changing models is one environment variable.
+- **Needs work:** some models reject `temperature` with a ValidationException; we retry without it. A per-model list of supported inference parameters in the Converse docs would save a round trip. **TODO** (Brian): model access request experience and the latency you saw in `npm run check:aws`.
 
 ### Amazon DynamoDB
 

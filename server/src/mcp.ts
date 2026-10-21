@@ -79,7 +79,7 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
       const day = date ?? rt.today();
       const summary = await rt.read((s) => daySummary(s, day, now));
       const digest = await writeDigest(summary);
-      return reply(digest.text, { card: 'day', summary, digestSource: digest.source });
+      return reply(digest.text, { card: 'day', summary, digestSource: digest.source, digestModel: digest.modelId ?? null });
     },
   );
 

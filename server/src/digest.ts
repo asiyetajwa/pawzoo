@@ -1,7 +1,7 @@
 // "How was Biscuit's day?" The facts come from agent.ts; Amazon Bedrock only phrases them.
 // With no AWS credentials, or if Bedrock fails, the template answer is used and the demo still works.
 
-import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
+import { bedrockModel, converse, replyText } from './bedrock.js';
 import type { DaySummary } from './agent.js';
 
 export interface DigestResult {
@@ -45,10 +45,9 @@ Never give medical or veterinary advice.`;
 
 export async function writeDigest(d: DaySummary): Promise<DigestResult> {
   const fallback: DigestResult = { text: templateDigest(d), source: 'template' };
-  const modelId = process.env.BEDROCK_MODEL_ID;
-  if (!modelId || process.env.PAWZOO_BEDROCK === 'off') return fallback;
+  const modelId = bedrockModel();
+  if (!modelId) return fallback;
   try {
-    const client = new BedrockRuntimeClient(process.env.AWS_REGION ? { region: process.env.AWS_REGION } : {});
     const facts = {
       pet: d.pet,
       day: d.dayName,
@@ -63,16 +62,14 @@ export async function writeDigest(d: DaySummary): Promise<DigestResult> {
       food: { status: d.food.status, runsOut: d.food.runsOutDay, daysLeft: d.food.daysLeft },
       openAlerts: d.openAlerts.map((a) => a.message),
     };
-    const out = await client.send(
-      new ConverseCommand({
-        modelId,
+    const out = await converse(
+      {
         system: [{ text: SYSTEM }],
         messages: [{ role: 'user', content: [{ text: JSON.stringify(facts) }] }],
-        inferenceConfig: { maxTokens: 220, temperature: 0.4 },
-      }),
-      { abortSignal: AbortSignal.timeout(8000) },
+      },
+      { maxTokens: 1200, temperature: 0.4 },
     );
-    const text = out.output?.message?.content?.map((c) => c.text ?? '').join('').trim();
+    const text = replyText(out);
     if (!text) return fallback;
     return { text: text.replace(/—/g, ', '), source: 'bedrock', modelId };
   } catch (err) {
