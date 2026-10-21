@@ -1,6 +1,7 @@
 // Pawzoo HTTP entry: the MCP endpoint, the Ring webhook, live pushes for the TV and the Alexa+ simulator,
 // demo controls, and static media.
 
+import './env.js';
 import express from 'express';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';

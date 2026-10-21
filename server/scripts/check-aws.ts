@@ -1,4 +1,5 @@
 // npm run check:aws: proves Bedrock and DynamoDB answer with the settings in .env, before you record.
+import '../src/env.js';
 import { DescribeTableCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { bedrockModel, converse, replyText } from '../src/bedrock.js';
 import { storeFromEnv } from '../src/store.js';
@@ -12,6 +13,8 @@ const bad = (m: string) => {
 };
 
 console.log(`Region: ${process.env.AWS_REGION ?? '(not set: the SDK default)'}`);
+console.log(`Model:  ${process.env.BEDROCK_MODEL_ID ?? '(not set)'}`);
+console.log(`Table:  ${process.env.PAWZOO_TABLE ?? '(not set)'}`);
 
 const model = bedrockModel();
 if (!model) bad('BEDROCK_MODEL_ID is not set, so answers come from templates.');
