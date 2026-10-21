@@ -11,7 +11,8 @@
     "test": "npm --prefix server test",
     "typecheck": "npm --prefix server run typecheck && npm --prefix web run typecheck",
     "placeholders": "node animation/placeholders.mjs",
-    "check:aws": "npm --prefix server run check:aws"
+    "check:aws": "npm --prefix server run check:aws",
+    "stop": "node scripts/stop.mjs"
   },
   "engines": {
     "node": ">=22"

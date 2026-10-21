@@ -21,6 +21,7 @@ git clone <this repo> pawzoo
 cd pawzoo
 npm run setup      # installs and builds the server and the web apps
 npm start          # http://127.0.0.1:8787
+npm run stop       # stops any Pawzoo server still holding the port
 ```
 
 Optional AWS: copy `.env.example` to `.env` and set `AWS_REGION`, `BEDROCK_MODEL_ID` and `PAWZOO_TABLE` (credentials come from your AWS CLI profile). `npm run check:aws` proves Bedrock and DynamoDB answer before you start. The "Under the Hood" panel then shows which model chose the tools and wrote the digest, and that state is in DynamoDB.
