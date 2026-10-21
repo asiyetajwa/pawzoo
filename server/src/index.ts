@@ -84,7 +84,7 @@ app.get('/api/clock', (_req, res) => {
 });
 
 app.get('/api/status', (_req, res) => {
-  res.json({ store: rt.store.kind, bedrockModel: bedrockModel(), region: process.env.AWS_REGION ?? null, ring: rt.ring ? 'live' : 'replay' });
+  res.json({ store: rt.store.kind, storeError: rt.storeError, bedrockModel: bedrockModel(), region: process.env.AWS_REGION ?? null, ring: rt.ring ? 'live' : 'replay' });
 });
 
 // The assistant brain behind the Alexa+ simulator: turns an utterance into tool calls.
@@ -137,9 +137,21 @@ const port = Number(process.env.PORT ?? 8787);
 const host = process.env.HOST ?? '127.0.0.1';
 
 if (process.env.PAWZOO_NO_LISTEN !== '1') {
-  app.listen(port, host, async () => {
-    await rt.catchUp();
+  const server = app.listen(port, host, async () => {
+    try {
+      await rt.catchUp();
+    } catch (err) {
+      console.error('[startup] Could not replay the demo day:', (err as Error).message);
+    }
     console.log(`Pawzoo on http://${host}:${port}  (MCP: /mcp, store: ${rt.store.kind}, demo date ${rt.demoDate})`);
     console.log(`Bedrock: ${bedrockModel() ?? 'off (template answers)'}${bedrockModel() ? ` in ${process.env.AWS_REGION ?? 'the default region'}` : ''}`);
+  });
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\nPort ${port} is already in use, most likely by another Pawzoo server that is still running.`);
+      console.error('Stop it (Ctrl+C in its window, or close that window) and run npm start again. Or start on another port: PORT=8788 npm start\n');
+      process.exit(1);
+    }
+    throw err;
   });
 }

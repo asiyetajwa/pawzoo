@@ -117,6 +117,7 @@ body.hood-open .hood { transform: none; }
 .session { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 13px; }
 .session dt { color: var(--muted); }
 .session dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.session dd.warn { color: var(--warn); font-weight: 500; }
 .wire { max-height: 240px; overflow-y: auto; display: grid; gap: 2px; }
 .wire details { border-bottom: 1px solid var(--line); padding: 5px 0; }
 .wire summary { display: flex; justify-content: space-between; gap: 8px; cursor: pointer; font-size: 12px; }

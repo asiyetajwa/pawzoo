@@ -6,7 +6,7 @@ import { ingestEvent, type AgentNotice } from './agent.js';
 import { Clock, localParts, zonedToUtc } from './time.js';
 import { DAY_SCRIPT, ESCAPE_SCRIPT, TIME_ZONE, eventFromScript, initialState, type ScenarioEvent } from './seed.js';
 import { RingClient, eventFromLiveWebhook, signRingBody, verifyRingSignature, webhookFor, type RingWebhook } from './ring.js';
-import type { Store } from './store.js';
+import { FileStore, type Store } from './store.js';
 
 export type Push =
   | AgentNotice
@@ -57,7 +57,7 @@ export class Runtime {
     const run = this.queue.then(async () => {
       const s = await this.load();
       const out = await fn(s);
-      if (save) await this.opts.store.save(s);
+      if (save) await this.save(s);
       return out;
     });
     this.queue = run.catch(() => undefined);
@@ -68,11 +68,40 @@ export class Runtime {
     return this.withState(fn, false);
   }
 
+  /** Why the configured store was abandoned, shown in the simulator so a fallback is never silent. */
+  storeError: string | null = null;
+
+  /** DynamoDB trouble (credentials, region, table name) must not take the demo down: switch to a local file and say so. */
+  private fallBackToFile(err: unknown): void {
+    const e = err as Error;
+    this.storeError = `${e.name}: ${e.message}`;
+    console.error(`[store] ${this.opts.store.kind} failed (${this.storeError}). Using a local file instead. Run "npm run check:aws" to see why.`);
+    this.opts.store = new FileStore(process.env.PAWZOO_STATE_FILE ?? 'data/state.json');
+  }
+
   private async load(): Promise<State> {
     if (!this.state) {
-      this.state = (await this.opts.store.load('hh-rivera')) ?? initialState(this.demoDate);
+      let loaded: State | null;
+      try {
+        loaded = await this.opts.store.load('hh-rivera');
+      } catch (err) {
+        if (this.opts.store.kind === 'file') throw err;
+        this.fallBackToFile(err);
+        loaded = await this.opts.store.load('hh-rivera');
+      }
+      this.state = loaded ?? initialState(this.demoDate);
     }
     return this.state;
+  }
+
+  private async save(s: State): Promise<void> {
+    try {
+      await this.opts.store.save(s);
+    } catch (err) {
+      if (this.opts.store.kind === 'file') throw err;
+      this.fallBackToFile(err);
+      await this.opts.store.save(s);
+    }
   }
 
   push(p: Push): void {

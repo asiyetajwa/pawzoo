@@ -385,8 +385,18 @@ async function boot(): Promise<void> {
     <dt>Protocol</dt><dd>${esc(client.getNegotiatedProtocolVersion())}</dd>
     <dt>Transport</dt><dd>Streamable HTTP</dd>
     <dt>Tools</dt><dd>${tools.length} (${tools.filter((t) => t._meta?.ui?.resourceUri).length} with MCP Apps cards)</dd>`;
-  const status = (await (await fetch('/api/status')).json()) as Any;
-  session.insertAdjacentHTML('beforeend', `<dt>State</dt><dd>${status.store === 'dynamodb' ? 'Amazon DynamoDB' : 'local file'}</dd><dt>Ring</dt><dd>${status.ring === 'live' ? 'live account' : 'replay'}</dd>`);
+  const statusRes = await fetch('/api/status');
+  if (!statusRes.ok || !(statusRes.headers.get('content-type') ?? '').includes('json')) {
+    session.insertAdjacentHTML(
+      'beforeend',
+      `<dt>Server</dt><dd class="warn">The server on this port is an older Pawzoo build. Stop every running "npm start" (Ctrl+C), run npm start again, then reload.</dd>`,
+    );
+  } else {
+    const status = (await statusRes.json()) as Any;
+    const state = status.store === 'dynamodb' ? 'Amazon DynamoDB' : status.storeError ? `local file (DynamoDB failed: ${esc(status.storeError)})` : 'local file';
+    session.insertAdjacentHTML('beforeend', `<dt>State</dt><dd${status.storeError ? ' class="warn"' : ''}>${state}</dd><dt>Ring</dt><dd>${status.ring === 'live' ? 'live account' : 'replay'}</dd>`);
+    if (!status.bedrockModel) $('#brain').textContent = 'rules (Bedrock off: no BEDROCK_MODEL_ID)';
+  }
   listen();
   setLight('idle');
 }
