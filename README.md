@@ -77,6 +77,10 @@ Fire TV app ◀──────────── /api/stream (server-sent eve
 | `RING_ACCESS_TOKEN`, `RING_WEBHOOK_SECRET`, `RING_DEVICE_MAP` | unset | Live Ring account: API token, webhook signing key, and which device is which camera (`{"<device_id>":"front-door"}`). |
 | `PAWZOO_DEMO_DATE` | today | The date the replayed Ring day happens on. |
 
+## Biscuit
+
+Biscuit and her house are original Pawzoo artwork drawn in code ([`animation/biscuit.js`](animation/biscuit.js)): a fluffy white corgi mix in a flat, isometric pastel style. `cd animation && npm ci && npm run render` re-renders every replay clip and snapshot into `media/` (needs ffmpeg). The clips stand in for Ring recordings in replay mode.
+
 ## Tests
 
 ```bash
