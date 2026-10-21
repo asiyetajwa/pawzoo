@@ -48,12 +48,28 @@ const SCENES: Record<string, Scene> = {
 
 let currentScene = '';
 
+/** Shrinks the big title until its longest line fits inside the blob (e.g. "Grooming"). */
+function fitDisplay(): void {
+  display.style.fontSize = '';
+  const blob = display.parentElement;
+  if (!blob) return;
+  const room = blob.clientWidth - display.offsetLeft - blob.clientWidth * 0.07;
+  const widest = Math.max(...[...display.children].map((el) => (el as HTMLElement).scrollWidth));
+  if (widest > room && room > 0) {
+    const size = parseFloat(getComputedStyle(display).fontSize);
+    display.style.fontSize = `${String(Math.floor((size * room) / widest))}px`;
+  }
+}
+window.addEventListener('resize', fitDisplay);
+void document.fonts.ready.then(fitDisplay);
+
 function setScene(name: string): void {
   const scene = SCENES[name] ?? SCENES.day;
   if (name === currentScene) return;
   currentScene = name;
   stage.dataset.scene = name in SCENES ? name : 'day';
   display.innerHTML = scene.title.map((t) => `<span>${esc(t)}</span>`).join('');
+  fitDisplay();
   topic.innerHTML = scene.topic;
   propsEl.querySelectorAll('.prop').forEach((el) => {
     el.classList.add('leave');

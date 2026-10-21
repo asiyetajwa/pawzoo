@@ -44,10 +44,12 @@ a { color: inherit; }
 .stage { max-width: 1240px; margin: 0 auto; padding: 56px 32px 24px; display: flex; flex-direction: column; align-items: center; gap: 28px; }
 
 /* ---------- The board ---------- */
-.board { position: relative; width: 100%; max-width: 1180px; aspect-ratio: 16 / 10; background: var(--board); border-radius: 44px; box-shadow: var(--shadow); isolation: isolate; }
+/* The board keeps 16:10 as its minimum: the head and the answer are in flow, so a tall card grows the
+   board instead of being clipped. Sizes use the board's width (cqw) so the blob and props hold their shape. */
+.board { position: relative; width: 100%; max-width: 1180px; min-height: calc(min(1176px, 100vw - 64px) * 0.625); background: var(--board); border-radius: 44px; box-shadow: var(--shadow); isolation: isolate; container-type: inline-size; display: flow-root; }
 
 .blob {
-  position: absolute; left: 0; top: 0; width: 45%; height: 78%;
+  position: absolute; left: 0; top: 0; width: 45%; height: 48.75cqw;
   border-radius: 44px 26% 34% 0 / 44px 22% 40% 0;
   background: linear-gradient(150deg, var(--blob-a), var(--blob-b));
   transition: background .6s ease, --blob-a .6s;
@@ -58,17 +60,17 @@ a { color: inherit; }
 .display span { display: block; white-space: nowrap; animation: rise .55s cubic-bezier(.2, .8, .2, 1) both; }
 .display span:nth-child(2) { animation-delay: .06s; }
 
-.props { position: absolute; inset: 0; pointer-events: none; z-index: 2; border-radius: 44px; overflow: hidden; }
+.props { position: absolute; inset: 0 0 auto 0; height: 62.5cqw; pointer-events: none; z-index: 2; border-radius: 44px; overflow: hidden; }
 .prop { position: absolute; display: block; animation: fly-in .8s cubic-bezier(.2, .8, .2, 1) both, bob 6s ease-in-out .8s infinite; filter: drop-shadow(0 26px 22px rgba(31, 27, 46, .28)); }
 .prop.soft { filter: blur(7px) drop-shadow(0 20px 18px rgba(31, 27, 46, .18)); opacity: .9; }
 .prop.leave { animation: fly-out .45s ease-in both; }
 
-.board-head { position: absolute; left: 54%; right: 5%; top: 9%; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; z-index: 3; }
+.board-head { position: relative; margin: 5.6cqw 5cqw 0 54cqw; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; z-index: 3; }
 .kicker { margin: 0 0 6px; font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .title { margin: 0; font-size: clamp(22px, 2.2vw, 30px); font-weight: 400; line-height: 1.15; }
 .avatar { width: 44px; height: 44px; border-radius: 50%; flex: none; box-shadow: 0 10px 20px -8px rgba(251, 191, 36, .8); transition: transform .3s; }
 
-.answer { position: absolute; left: 54%; right: 5%; top: 25%; bottom: 22%; overflow-y: auto; z-index: 3; scrollbar-width: thin; }
+.answer { position: relative; margin: 2cqw 5cqw 15cqw 54cqw; min-height: 1px; z-index: 3; }
 .transcript { display: flex; flex-direction: column; gap: 6px; }
 .turn { margin: 0; overflow-wrap: anywhere; }
 .turn.person { font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
@@ -84,7 +86,7 @@ a { color: inherit; }
 .step:hover { color: var(--ink); }
 .clock { margin-left: 8px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-.dock { position: absolute; left: 50%; bottom: 5.5%; transform: translateX(-24%); display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 10px; width: min(46%, 520px); background: var(--board); border-radius: 999px; box-shadow: var(--dock-shadow); z-index: 4; }
+.dock { position: absolute; right: calc(5% + 64px); bottom: 5.5%; display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 10px; width: min(40%, 520px); background: var(--board); border-radius: 999px; box-shadow: var(--dock-shadow); z-index: 4; }
 .dock input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); padding: 10px 6px; outline: none; font-size: 15px; }
 .dock input::placeholder { color: var(--muted); }
 .dock-btn { width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: #8b5cf6; display: grid; place-items: center; cursor: pointer; flex: none; }
@@ -143,16 +145,19 @@ body.hood-open .hood { transform: none; }
 }
 
 /* ---------- Narrow screens: blob on top, everything in flow ---------- */
-@media (max-width: 860px) {
+@media (max-width: 1000px) {
   .stage { padding: 16px 16px 12px; gap: 18px; }
-  .board { aspect-ratio: auto; border-radius: 32px; display: flex; flex-direction: column; padding: 0 0 16px; }
+  .board { min-height: 0; border-radius: 32px; display: flex; flex-direction: column; padding: 0 0 16px; }
   .blob { position: relative; width: 100%; height: 210px; border-radius: 32px 32px 46% 12% / 32px 32px 30% 18%; flex: none; }
   .display { top: 34%; left: 24px; font-size: 48px; }
   .mark { left: 24px; top: 24px; }
   .props { inset: 0 0 auto 0; height: 210px; border-radius: 32px 32px 0 0; }
+  /* One prop, kept to the right of the title; the rest would sit on the words. */
+  .prop:not(:first-child) { display: none; }
+  .prop:first-child { left: auto !important; right: 6%; top: 24% !important; width: 104px !important; }
   .board-head, .answer, .timeline, .dock, .corner { position: static; transform: none; }
-  .board-head { padding: 18px 20px 0; }
-  .answer { padding: 12px 20px 0; max-height: none; overflow: visible; }
+  .board-head { padding: 18px 20px 0; margin: 0; }
+  .answer { padding: 12px 20px 0; margin: 0; }
   .timeline { padding: 16px 20px 0; flex-wrap: wrap; }
   .dock { width: auto; margin: 16px 16px 0; }
   .corner { position: absolute; top: 16px; right: 16px; background: rgba(255, 255, 255, .25); color: #fff; }
