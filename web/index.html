@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pawzoo for Alexa+</title>
+<meta name="description" content="Pawzoo, simulated as an Alexa+ add-on: a real MCP client talking to the Pawzoo MCP server.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="logo.svg" alt="" width="28" height="28"><span>Pawzoo</span></div>
+  <p class="label">Simulated Alexa+ add-on</p>
+  <div class="top-right">
+    <span id="clock" class="clock">Connecting</span>
+    <button id="hood-toggle" class="chip" type="button">Under the Hood</button>
+  </div>
+</header>
+
+<main class="stage">
+  <section class="device" aria-label="Screen device">
+    <div class="screen">
+      <div id="banner" class="banner" role="alert" hidden></div>
+      <div class="conversation">
+        <div id="transcript" class="transcript" aria-live="polite"></div>
+        <div id="card" class="card-host"></div>
+      </div>
+      <div id="lightbar" class="lightbar" data-state="off" aria-hidden="true"></div>
+    </div>
+    <form id="ask" class="ask">
+      <button id="mic" class="mic" type="button" aria-pressed="false" aria-label="Talk">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z"/></svg>
+      </button>
+      <input id="utterance" autocomplete="off" placeholder="Say or type: How was Biscuit's day?" aria-label="What to ask">
+      <button class="send" type="submit">Ask</button>
+    </form>
+    <div class="suggestions" aria-label="Try saying">
+      <button type="button" class="chip" data-say="How was Biscuit's day?">How Was Biscuit's Day?</button>
+      <button type="button" class="chip" data-say="Show me when the walker came on the TV">Walker on the TV</button>
+      <button type="button" class="chip" data-say="Play Biscuit's day on the TV">Play the Day on TV</button>
+      <button type="button" class="chip" data-say="Do we need dog food?">Do We Need Food?</button>
+      <button type="button" class="chip" data-say="She's on two and a half cups a day now">2.5 Cups a Day Now</button>
+      <button type="button" class="chip" data-say="Reorder her food">Reorder Food</button>
+      <button type="button" class="chip" data-say="Pay Dana with a $3 tip">Pay Dana + Tip</button>
+      <button type="button" class="chip" data-say="Book Biscuit a grooming appointment">Book Grooming</button>
+      <button type="button" class="chip" data-say="Yes">Yes</button>
+    </div>
+  </section>
+
+  <aside class="hood" aria-label="Under the hood">
+    <section>
+      <h2>MCP Session</h2>
+      <dl id="session" class="session"><dt>Status</dt><dd>Connecting</dd></dl>
+      <p class="small">Assistant: <span id="brain">waiting</span></p>
+      <label class="small"><input id="speak" type="checkbox" checked> Speak answers</label>
+    </section>
+    <section>
+      <h2>JSON-RPC</h2>
+      <div id="wire" class="wire"></div>
+    </section>
+    <section>
+      <h2>Ring Events</h2>
+      <ul id="events" class="events"></ul>
+    </section>
+    <section>
+      <h2>Demo Controls</h2>
+      <p class="small">Replays a recorded Ring day. No real devices are touched.</p>
+      <div class="controls">
+        <button type="button" class="chip" data-time="07:00">7:00 AM</button>
+        <button type="button" class="chip" data-time="09:00">9:00 AM</button>
+        <button type="button" class="chip" data-time="14:00">2:00 PM</button>
+        <button type="button" class="chip" data-time="19:00">7:00 PM</button>
+        <button type="button" class="chip warn" id="escape">Dog Gets Out</button>
+        <button type="button" class="chip" id="reset">Reset</button>
+      </div>
+      <p class="small"><a href="tv.html" target="_blank" rel="noopener">Open the TV Preview</a></p>
+    </section>
+  </aside>
+</main>
+<footer class="foot small">Pawzoo is a demo. All people, pets, businesses and purchases are fictional, and nothing is charged.</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>

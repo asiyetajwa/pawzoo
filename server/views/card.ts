@@ -52,7 +52,7 @@ function dayCard(d: Any, base: string): string {
     <div class="strip">${strip || '<p class="muted">No moments yet.</p>'}</div>
     <div class="actions">
       ${button('Play on TV', 'play_on_tv', { target: 'day_reel' })}
-      ${food.status === 'order_now' || food.status === 'order_soon' ? button('Reorder food', 'quote_food_order', { quantity: 1 }, 'quiet') : ''}
+      ${food.status === 'order_now' || food.status === 'order_soon' ? button('Reorder Food', 'quote_food_order', { quantity: 1 }, 'quiet') : ''}
     </div>`;
 }
 
@@ -121,7 +121,7 @@ function walkCard(d: Any): string {
       ${short ? `<li class="warn"><b>Short</b> ${short}</li>` : ''}
       <li><b>Payment</b> ${w.paid ? `Paid ${money(w.paid.amountUsd + w.paid.tipUsd)}` : `${money(r.amountDueUsd)} due`}</li>
     </ul>
-    ${w.paid ? '' : `<div class="actions">${button(`Pay + $3 tip`, 'quote_walk_payment', { walk_id: w.id, tip_usd: 3 })}${button('Pay, no tip', 'quote_walk_payment', { walk_id: w.id, tip_usd: 0 }, 'quiet')}</div>`}`;
+    ${w.paid ? '' : `<div class="actions">${button(`Pay + $3 Tip`, 'quote_walk_payment', { walk_id: w.id, tip_usd: 3 })}${button('Pay, No Tip', 'quote_walk_payment', { walk_id: w.id, tip_usd: 0 }, 'quiet')}</div>`}`;
 }
 
 function slotsCard(d: Any): string {
