@@ -102,17 +102,37 @@ function setLight(state: 'idle' | 'listening' | 'thinking' | 'speaking' | 'alert
   lightbar.dataset.state = state;
 }
 
+let voiceOn = false;
+let playing: HTMLAudioElement | null = null;
+let voiceTurn = 0;
+
+/** Speaks through ElevenLabs via the server. Without a key the answer is shown, not spoken. */
+async function speakLine(text: string): Promise<void> {
+  const turnId = ++voiceTurn;
+  playing?.pause();
+  if (!speakOn || !voiceOn) return;
+  try {
+    const res = await fetch('/api/voice', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }) });
+    if (!res.ok || turnId !== voiceTurn) return;
+    const url = URL.createObjectURL(await res.blob());
+    const audio = new Audio(url);
+    playing = audio;
+    audio.onplay = () => setLight('speaking');
+    audio.onended = () => {
+      URL.revokeObjectURL(url);
+      if (playing === audio) setLight('idle');
+    };
+    await audio.play();
+  } catch {
+    // Autoplay blocked or network trouble: the answer is still on screen.
+  }
+}
+
 function say(text: string): void {
   history.push({ role: 'assistant', text });
   transcript.insertAdjacentHTML('beforeend', `<p class="turn assistant">${esc(text)}</p>`);
   transcript.scrollTop = transcript.scrollHeight;
-  if (!speakOn || !('speechSynthesis' in window)) return;
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = 1.02;
-  u.onstart = () => setLight('speaking');
-  u.onend = () => setLight('idle');
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+  void speakLine(text);
 }
 
 function heard(text: string): void {
@@ -301,7 +321,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-say]').forEach((b) =>
 
 $('#speak').addEventListener('change', (e) => {
   speakOn = (e.target as HTMLInputElement).checked;
-  if (!speakOn) speechSynthesis.cancel();
+  if (!speakOn) playing?.pause();
 });
 
 $('#hood-toggle').addEventListener('click', () => {
@@ -396,6 +416,8 @@ async function boot(): Promise<void> {
     const state = status.store === 'dynamodb' ? 'Amazon DynamoDB' : status.storeError ? `local file (DynamoDB failed: ${esc(status.storeError)})` : 'local file';
     session.insertAdjacentHTML('beforeend', `<dt>State</dt><dd${status.storeError ? ' class="warn"' : ''}>${state}</dd><dt>Ring</dt><dd>${status.ring === 'live' ? 'live account' : 'replay'}</dd>`);
     if (!status.bedrockModel) $('#brain').textContent = 'rules (Bedrock off: no BEDROCK_MODEL_ID)';
+    voiceOn = Boolean(status.voice);
+    session.insertAdjacentHTML('beforeend', `<dt>Voice</dt><dd>${status.voice ? 'ElevenLabs' : 'off (set ELEVENLABS_API_KEY)'}</dd>`);
   }
   listen();
   setLight('idle');

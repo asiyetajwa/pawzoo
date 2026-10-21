@@ -12,6 +12,8 @@ process.env.PAWZOO_NO_LISTEN = '1';
 process.env.PAWZOO_DEMO_DATE = '2026-10-22';
 process.env.PAWZOO_STATE_FILE = join(mkdtempSync(join(tmpdir(), 'pawzoo-')), 'state.json');
 process.env.PAWZOO_BEDROCK = 'off';
+process.env.PAWZOO_ENV_FILE = join(tmpdir(), 'pawzoo-no-env');
+delete process.env.ELEVENLABS_API_KEY;
 
 const { app, rt } = await import('../src/index.js');
 const { Client, StreamableHTTPClientTransport } = await import('@modelcontextprotocol/client');
@@ -143,6 +145,13 @@ test('escape: an alert, a push to the TV, and resolving it', async () => {
   await call('resolve_alert', { alert_id: alerts.alerts[0].id });
   const clear = await call('get_alerts');
   assert.match(clear.say, /No alerts/);
+});
+
+test('voice is off without an ElevenLabs key, and says so', async () => {
+  const status = await (await fetch(`${base}/api/status`)).json();
+  assert.equal(status.voice, null);
+  const res = await fetch(`${base}/api/voice`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: 'hello' }) });
+  assert.equal(res.status, 503);
 });
 
 test('the simulator brain maps speech to tools without Bedrock', async () => {

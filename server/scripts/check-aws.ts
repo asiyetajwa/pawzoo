@@ -48,4 +48,19 @@ else {
   }
 }
 
+const voiceKey = process.env.ELEVENLABS_API_KEY?.trim();
+if (!voiceKey) console.log('  --    ElevenLabs not set (answers are shown, not spoken). Add ELEVENLABS_API_KEY to .env.');
+else {
+  try {
+    const res = await fetch('https://api.elevenlabs.io/v1/user/subscription', { headers: { 'xi-api-key': voiceKey }, signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) bad(`ElevenLabs: HTTP ${res.status} ${(await res.text()).slice(0, 160)}`);
+    else {
+      const sub = (await res.json()) as { tier?: string; character_count?: number; character_limit?: number };
+      ok(`ElevenLabs key works (${sub.tier ?? 'plan'}: ${sub.character_count ?? '?'} of ${sub.character_limit ?? '?'} characters used)`);
+    }
+  } catch (err) {
+    bad(`ElevenLabs: ${(err as Error).message}`);
+  }
+}
+
 process.exit(failed ? 1 : 0);

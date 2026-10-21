@@ -14,6 +14,7 @@ import { storeFromEnv } from './store.js';
 import { dayReel, daySummary, foodProjection } from './agent.js';
 import { assistantTurn } from './assistant.js';
 import { bedrockModel } from './bedrock.js';
+import { speak, voiceConfig } from './voice.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..', '..');
@@ -85,7 +86,36 @@ app.get('/api/clock', (_req, res) => {
 });
 
 app.get('/api/status', (_req, res) => {
-  res.json({ store: rt.store.kind, storeError: rt.storeError, bedrockModel: bedrockModel(), region: process.env.AWS_REGION ?? null, ring: rt.ring ? 'live' : 'replay' });
+  const voice = voiceConfig();
+  res.json({
+    store: rt.store.kind,
+    storeError: rt.storeError,
+    bedrockModel: bedrockModel(),
+    region: process.env.AWS_REGION ?? null,
+    ring: rt.ring ? 'live' : 'replay',
+    voice: voice.enabled ? { provider: 'elevenlabs', voiceId: voice.voiceId, modelId: voice.modelId } : null,
+  });
+});
+
+// Spoken answers (ElevenLabs). The browser never sees the API key.
+const voiceCache = join(process.env.PAWZOO_DATA_DIR ?? 'data', 'voice');
+app.post('/api/voice', async (req, res) => {
+  const text = (req.body as { text?: string }).text?.trim();
+  if (!text) {
+    res.status(400).json({ error: 'text required' });
+    return;
+  }
+  if (!voiceConfig().enabled) {
+    res.status(503).json({ error: 'ELEVENLABS_API_KEY is not set' });
+    return;
+  }
+  try {
+    const audio = await speak(text, voiceCache);
+    res.set({ 'content-type': 'audio/mpeg', 'cache-control': 'no-store' }).send(audio);
+  } catch (err) {
+    console.warn('[voice]', (err as Error).message);
+    res.status(502).json({ error: (err as Error).message });
+  }
 });
 
 // The assistant brain behind the Alexa+ simulator: turns an utterance into tool calls.
@@ -146,6 +176,7 @@ if (process.env.PAWZOO_NO_LISTEN !== '1') {
     }
     console.log(`Pawzoo on http://${host}:${port}  (MCP: /mcp, store: ${rt.store.kind}, demo date ${rt.demoDate})`);
     console.log(`Bedrock: ${bedrockModel() ?? 'off (template answers)'}${bedrockModel() ? ` in ${process.env.AWS_REGION ?? 'the default region'}` : ''}`);
+    console.log(`Voice: ${voiceConfig().enabled ? `ElevenLabs (voice ${voiceConfig().voiceId})` : 'off (set ELEVENLABS_API_KEY in .env)'}`);
   });
   server.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
