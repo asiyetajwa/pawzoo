@@ -112,6 +112,9 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 /* ---------- Under the hood drawer ---------- */
 .hood { position: fixed; top: 16px; right: 16px; bottom: 16px; width: min(400px, calc(100vw - 32px)); background: var(--board); border-radius: 32px; box-shadow: var(--shadow); padding: 20px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; z-index: 20; transform: translateX(calc(100% + 32px)); transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
 body.hood-open .hood { transform: none; }
+.hood-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 4px 0 6px; font-size: 15px; font-weight: 600; color: var(--ink); }
+.hood-close { flex: none; width: 40px; height: 40px; border-radius: 14px; border: 0; background: var(--band); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.hood-close:hover { background: var(--ink); color: var(--board); }
 .hood section { background: var(--band); border-radius: 20px; padding: 14px 16px; min-width: 0; }
 .hood h2 { margin: 0 0 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
 .session { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 13px; }

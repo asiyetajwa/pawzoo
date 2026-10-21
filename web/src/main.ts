@@ -329,6 +329,13 @@ $('#speak').addEventListener('change', (e) => {
 $('#hood-toggle').addEventListener('click', () => {
   document.body.classList.toggle('hood-open');
 });
+$('#hood-close').addEventListener('click', () => {
+  document.body.classList.remove('hood-open');
+  $('#hood-toggle').focus();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.body.classList.remove('hood-open');
+});
 
 // ---------- Demo controls ----------
 
