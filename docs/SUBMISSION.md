@@ -1,8 +1,15 @@
 # Devpost Submission Draft
 
-Copy each section into the Devpost form. Submit by Friday 18:00 EAT (08:00 PT), four hours before the deadline. Upload `docs/thumbnail.jpg` as the thumbnail and the demo film (`demo/out/PawzooLandscape.mp4`, on YouTube) as the video.
+Copy each section into the Devpost form. Deadline: Friday 23 October 2026, 12:00 PT (22:00 EAT); submit by 18:00 EAT. Entries can be edited until the deadline, not after.
 
-Music and sound in the film were generated with ElevenLabs (Music and Sound Effects); the narration is the ElevenLabs voice Jessica.
+## Links
+
+- **Demo video (public on YouTube, 1:17):** https://youtu.be/TU6OOYvhF2o
+- **Repository (public, MIT licence):** https://github.com/asiyetajwa/pawzoo
+- **Fire TV app (APK):** https://github.com/asiyetajwa/pawzoo/releases/latest/download/pawzoo-tv.apk (release page: https://github.com/asiyetajwa/pawzoo/releases/tag/v0.3.0)
+- **Thumbnail:** `docs/thumbnail.jpg` (3:2) in the repo: https://github.com/asiyetajwa/pawzoo/blob/main/docs/thumbnail.jpg
+
+Music and sound in the film were generated with ElevenLabs (Music and Sound Effects) on Brian's ElevenLabs account; the narration is the ElevenLabs voice Jessica. The rules bar copyrighted music without permission: confirm the account's plan grants commercial use of generated audio.
 
 ## Project name
 
@@ -14,8 +21,13 @@ Ring sees your dog's day. Alexa+ acts on it. Fire TV shows it.
 
 ## Tracks and mini challenges
 
-- Primary tracks: **Alexa+**, **Ring**, **Fire TV** (Emerson Sklar confirmed on the forum that one project may enter several tracks and win at most one).
-- Mini challenge: **AWS Builder** (Amazon Bedrock with Amazon Nova 2 Lite, Amazon DynamoDB).
+- Primary tracks: **Alexa+** (simulated Alexa+ path: the simulator is a real MCP client over Streamable HTTP, which the FAQ accepts) and **Ring** (replay mode, approved on the forum). A project can win at most one track prize and one mini challenge prize.
+- **Fire TV: Brian's decision.** The rules say the demo video must show "the project running on an actual Fire TV device or the Fire TV/Vega simulator". The film shows the TV experience as the browser preview in a TV frame, not the APK on Fire TV or its simulator. Enter Fire TV only if a clip of the APK running in the Fire TV/Vega simulator or the Android TV emulator is added to the video first.
+- Mini challenge: **AWS Builder** (Amazon Bedrock with Amazon Nova 2 Lite, Amazon DynamoDB; described under Product feedback as required). Not entered: Open Source (needs a separate open-source contribution URL).
+
+## Built with
+
+TypeScript, Node.js, Express, Model Context Protocol TypeScript SDK v2, MCP Apps, Ring API, React Native for TV (react-native-tvos), Expo, react-native-video, Amazon Bedrock, Amazon Nova 2 Lite, Amazon DynamoDB, ElevenLabs, three.js, Remotion, Playwright
 
 ## Description
 

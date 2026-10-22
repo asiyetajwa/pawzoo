@@ -2,6 +2,8 @@
 
 **Your Ring cameras already see your dog's day. Pawzoo lets Alexa+ do something about it, and puts the day on your Fire TV.**
 
+**[Watch the 77-second demo](https://youtu.be/TU6OOYvhF2o)** · **[Download the Fire TV app](https://github.com/asiyetajwa/pawzoo/releases/latest/download/pawzoo-tv.apk)**
+
 Pawzoo is one product across three Amazon devices:
 
 | Device | What Pawzoo does |
