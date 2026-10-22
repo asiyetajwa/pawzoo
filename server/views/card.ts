@@ -137,8 +137,30 @@ function slotsCard(d: Any): string {
   return `<header><p class="eyebrow">Open slots</p><h1>${esc(label[d.service] ?? d.service)}</h1></header><ul class="rows">${rows || '<li class="muted">Nothing open.</li>'}</ul>`;
 }
 
+const when = (at: string, opts: Intl.DateTimeFormatOptions) => new Date(at).toLocaleString('en-US', { ...opts, timeZone: 'America/Chicago' });
+
+/** A receipt for what was just done: the details behind the spoken line, not the line again. */
 function doneCard(d: Any): string {
-  return `<header><p class="eyebrow">Done</p><h1>${esc(d.say)}</h1></header>`;
+  const x = d.done;
+  if (d.remembered) return `<header><p class="eyebrow">Remembered</p><h1>Noted for next time</h1></header><ul class="facts"><li><b>You said</b> ${esc(d.remembered)}</li></ul>`;
+  if (!x) return `<header><p class="eyebrow">Done</p><h1>All set</h1></header>`;
+  let title = '';
+  let lines = '';
+  if (x.kind === 'order') {
+    title = 'Food ordered';
+    lines = `<li><b>Item</b> ${esc(x.product.name)}${x.order.quantity > 1 ? ` x${String(x.order.quantity)}` : ''}</li>
+      <li><b>Total</b> ${money(x.order.totalUsd)}</li><li><b>Arrives</b> ${esc(when(`${String(x.order.arrivesOn)}T17:00:00Z`, { weekday: 'long', month: 'short', day: 'numeric' }))}</li>`;
+  } else if (x.kind === 'walk_payment') {
+    title = 'Walk paid';
+    const paid = x.walk.paid;
+    lines = `<li><b>To</b> ${esc(x.walk.walker)}</li><li><b>Walk</b> ${money(paid.amountUsd)}</li><li><b>Tip</b> ${money(paid.tipUsd)}</li><li><b>Total</b> ${money(paid.amountUsd + paid.tipUsd)}</li>`;
+  } else {
+    const slot = x.booking.slot;
+    title = slot.service === 'vet_checkup' ? 'Check-up booked' : slot.service === 'extra_walk' ? 'Extra walk booked' : 'Grooming booked';
+    lines = `<li><b>Where</b> ${esc(slot.provider)}</li><li><b>When</b> ${esc(when(slot.startAt, { weekday: 'long', hour: 'numeric', minute: '2-digit' }))}</li><li><b>Price</b> ${money(slot.priceUsd)}</li>`;
+  }
+  return `<header><p class="eyebrow">Done</p><h1>${title}</h1></header><ul class="facts">${lines}</ul>
+    <p class="muted small">Simulated. Nothing is charged in this demo.</p>`;
 }
 
 function render(data: Any | undefined): void {

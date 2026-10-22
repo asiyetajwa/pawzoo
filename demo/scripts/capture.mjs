@@ -1,6 +1,7 @@
-// Captures every state the Pawzoo film shows, from the real app, at 1600x900 @2x, and records the
-// on-screen box of each button the cursor clicks (public/pawzoo/boxes.json), the way the Dribble
-// Logs film does. Start Pawzoo first (npm start in the repo root), then: npm run capture
+// Captures every state the Pawzoo film shows, from the real app, at 1600 css px wide @2x, and records the
+// on-screen box of each button the cursor clicks and of each answer the camera reads
+// (public/pawzoo/boxes.json), the way the Dribble Logs film does. The simulator is captured tall enough
+// for its tallest answer (the board grows to fit a card rather than clip it); the TV at 16:9. Start Pawzoo first (npm start in the repo root), then: npm run capture
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
@@ -12,9 +13,10 @@ const post = (path, body) =>
   fetch(BASE + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) });
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
-const ctx = await browser.newContext({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 2, colorScheme: 'light' });
+const SIM_H = 1110;
+const ctx = await browser.newContext({ viewport: { width: 1600, height: SIM_H }, deviceScaleFactor: 2, colorScheme: 'light' });
 const page = await ctx.newPage();
-const boxes = { size: { w: 1600, h: 900 } };
+const boxes = { size: { w: 1600, h: SIM_H } };
 const settle = (ms = 1700) => page.waitForTimeout(ms);
 
 async function boxOf(key, locator) {
@@ -32,6 +34,10 @@ async function cardButtonBox(key, text) {
 }
 
 async function shot(name) {
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  if (height > SIM_H) throw new Error(`${name} is ${String(height)}px tall; raise SIM_H so nothing is cut off`);
+  await boxOf(`answer:${name}`, page.locator('.answer'));
   await page.screenshot({ path: `${OUT}${name}.png` });
   console.log('captured', name);
 }
@@ -83,6 +89,7 @@ await boxOf('chipTv', chip("Play Biscuit's day on the TV"));
 
 // The TV, in its own page.
 const tv = await ctx.newPage();
+await tv.setViewportSize({ width: 1600, height: 900 });
 await tv.goto(`${BASE}/tv.html`);
 await tv.waitForTimeout(1500);
 await tv.screenshot({ path: `${OUT}tv-home.png` });

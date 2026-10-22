@@ -1,7 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { theme } from '../theme';
-import { BlurText, Camera, clamp, Cursor, easeOut, popAt, type CamKey, type CursorKey } from '../components/motion';
+import { BlurText, Camera, cameraAt, clamp, Cursor, easeOut, popAt, type CamKey, type CursorKey } from '../components/motion';
 import boxes from '../../public/pawzoo/boxes.json';
 
 type SceneProps = { duration: number };
@@ -14,10 +14,12 @@ const center = (key: string): [number, number] => {
 
 /* ------------------------------------------------------------ the browser window */
 
-// Captures are 1600x900 css px; the window shows them 1500 world units wide.
-const WIN = { w: 1500, bar: 46 };
-const S = WIN.w / 1600;
-const winH = 900 * S + WIN.bar;
+// Captures are 1600 css px wide and as tall as the simulator's tallest answer (boxes.size.h);
+// the window shows them 1400 world units wide.
+const CAP = (boxes as unknown as { size: { w: number; h: number } }).size;
+const WIN = { w: 1400, bar: 46 };
+const S = WIN.w / CAP.w;
+const winH = CAP.h * S + WIN.bar;
 /** World position of a point on the capture (css px). */
 const w = (x: number, y: number) => ({ x: -WIN.w / 2 + x * S, y: -winH / 2 + WIN.bar + y * S });
 
@@ -57,7 +59,7 @@ const Window: React.FC<{ states: State[]; url?: string }> = ({ states, url = '12
           {url}
         </div>
       </div>
-      <div style={{ position: 'relative', width: WIN.w, height: 900 * S, background: theme.bg }}>
+      <div style={{ position: 'relative', width: WIN.w, height: CAP.h * S, background: theme.bg }}>
         {layers.map((l) =>
           l.visible ? (
             <Img key={l.src} src={staticFile(`pawzoo/${l.src}.png`)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: l.opacity }} />
@@ -96,13 +98,59 @@ const Television: React.FC<{ states: State[] }> = ({ states }) => {
 
 /** Camera key that centres a point of the capture at zoom z. */
 const at = (f: number, x: number, y: number, z: number): CamKey => ({ f, ...w(x, y), z });
-const WIDE = (f: number): CamKey => ({ f, x: 0, y: 30, z: 1.0 });
+const WIDE = (f: number): CamKey => ({ f, x: 0, y: 0, z: 1.0 });
+/** The whole simulator, a little closer, for clicking the suggestion chips. */
+const NEAR = (f: number): CamKey => at(f, CAP.w / 2, CAP.h / 2, 1.06);
+/**
+ * Reads the answer in a capture: centres its box and zooms as close as fits the whole card, buttons
+ * included (never closer than READ). `drift` eases in a touch over the hold.
+ */
+const read = (f: number, shot: string, drift = 0): CamKey => {
+  const answer = B[`answer:${shot}`] ?? { x: 847, y: 237, w: 482, h: 480 };
+  // Take in the heading above the answer too ("How was her day"), so no line is cut at the top.
+  const headTop = 118;
+  const b = { ...answer, y: headTop, h: answer.y + answer.h - headTop };
+  // The card sits in the screen above the caption pill (bottom 180px), with a margin all round.
+  const top = 40;
+  const bottom = 1080 - 180;
+  const z = Math.min(READ, (bottom - top) / ((b.h + 40) * S), (1920 * 0.9) / ((b.w + 120) * S)) + drift;
+  const lift = (1080 / 2 - (top + bottom) / 2) / (z * S);
+  return at(f, b.x + b.w / 2, b.y + b.h / 2 + lift, z);
+};
 /** Cursor key on a capture point. */
 const cur = (f: number, x: number, y: number, click = false): CursorKey => ({ f, ...w(x, y), click });
 const clickOn = (f: number, key: string): CursorKey => cur(f, ...center(key), true);
-const ANSWER: [number, number] = [1140, 420];
-/** Zoom for reading a card: starts the frame past the blob's title, so no word is sliced. */
+/** Closest zoom for reading a card. */
 const READ = 1.95;
+
+/**
+ * While the camera reads a card, a soft white veil covers the screen left of the answer column, so
+ * the big blob title is never shown sliced in half at the frame edge.
+ */
+const ReadVeil: React.FC<{ keys: CamKey[] }> = ({ keys }) => {
+  const frame = useCurrentFrame();
+  const { width } = useVideoConfig();
+  const c = cameraAt(frame, keys);
+  const answerLeft = w((B['answer:sim-day']?.x ?? 847) - 28, 0).x;
+  const edge = width / 2 + (answerLeft - c.x) * c.z;
+  const opacity = interpolate(c.z, [1.1, 1.35], [0, 1], clamp);
+  if (opacity <= 0 || edge <= 0) return null;
+  return (
+    <AbsoluteFill style={{ pointerEvents: 'none' }}>
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: edge,
+          opacity,
+          background: `linear-gradient(90deg, ${theme.bg} 0%, #ffffff ${String(Math.max(0, ((edge - 140) / edge) * 100))}%, rgba(255,255,255,0) 100%)`,
+        }}
+      />
+    </AbsoluteFill>
+  );
+};
 
 /** Small caption pill under the action, for the benefit the line names. */
 const Callout: React.FC<{ text: string; at: number; outAt: number }> = ({ text, at: start, outAt }) => {
@@ -156,7 +204,7 @@ export const IntroScene: React.FC<SceneProps> = ({ duration }) => {
 
 export const DayScene: React.FC<SceneProps> = ({ duration }) => {
   const click = 58;
-  const cam: CamKey[] = [WIDE(0), WIDE(click + 16), at(150, ...ANSWER, READ), at(duration, ANSWER[0] + 8, ANSWER[1] + 10, READ + 0.06)];
+  const cam: CamKey[] = [WIDE(0), WIDE(click + 16), read(150, 'sim-day'), read(duration, 'sim-day', 0.05)];
   const cursor: CursorKey[] = [cur(0, 1250, 640), cur(46, ...center('chipDay')), clickOn(click, 'chipDay'), cur(click + 40, 600, 700)];
   return (
     <>
@@ -164,6 +212,7 @@ export const DayScene: React.FC<SceneProps> = ({ duration }) => {
         <Window states={[{ src: 'sim-start', at: 0 }, { src: 'sim-day', at: click + 8 }]} />
         <Cursor keys={cursor} visibleFrom={4} visibleTo={click + 60} />
       </Camera>
+      <ReadVeil keys={cam} />
       <Callout text="One question, one answer" at={170} outAt={duration - 20} />
     </>
   );
@@ -171,7 +220,7 @@ export const DayScene: React.FC<SceneProps> = ({ duration }) => {
 
 export const WalkScene: React.FC<SceneProps> = ({ duration }) => {
   const click = 44;
-  const cam: CamKey[] = [at(0, 900, 560, 1.12), at(click + 10, 900, 560, 1.12), at(150, 1140, 400, READ), at(duration, 1146, 410, READ + 0.06)];
+  const cam: CamKey[] = [NEAR(0), NEAR(click + 10), read(150, 'sim-walk'), read(duration, 'sim-walk', 0.05)];
   const cursor: CursorKey[] = [cur(0, 1150, 690), cur(34, ...center('chipWalk')), clickOn(click, 'chipWalk'), cur(click + 40, 1000, 700)];
   return (
     <>
@@ -179,6 +228,7 @@ export const WalkScene: React.FC<SceneProps> = ({ duration }) => {
         <Window states={[{ src: 'sim-day', at: 0 }, { src: 'sim-walk', at: click + 8 }]} />
         <Cursor keys={cursor} visibleFrom={0} visibleTo={click + 50} />
       </Camera>
+      <ReadVeil keys={cam} />
       <Callout text="Checked against the front door camera" at={160} outAt={duration - 20} />
     </>
   );
@@ -187,7 +237,7 @@ export const WalkScene: React.FC<SceneProps> = ({ duration }) => {
 export const PayScene: React.FC<SceneProps> = ({ duration }) => {
   const tap = 44;
   const confirm = 196;
-  const cam: CamKey[] = [at(0, 1140, 470, READ), at(tap + 12, 1140, 470, READ), at(110, 1140, 430, READ), at(confirm + 20, 1140, 430, READ), at(duration, 1146, 400, READ + 0.06)];
+  const cam: CamKey[] = [read(0, 'sim-walk'), read(tap + 12, 'sim-walk'), read(110, 'sim-pay'), read(confirm + 20, 'sim-pay'), read(duration, 'sim-paid', 0.05)];
   const cursor: CursorKey[] = [cur(0, 1150, 700), cur(34, ...center('cardPayTip')), clickOn(tap, 'cardPayTip'), cur(150, 1000, 560), cur(186, ...center('cardConfirm')), clickOn(confirm, 'cardConfirm'), cur(confirm + 40, 1100, 600)];
   return (
     <>
@@ -195,6 +245,7 @@ export const PayScene: React.FC<SceneProps> = ({ duration }) => {
         <Window states={[{ src: 'sim-walk', at: 0 }, { src: 'sim-pay', at: tap + 8 }, { src: 'sim-paid', at: confirm + 8 }]} />
         <Cursor keys={cursor} visibleFrom={0} visibleTo={confirm + 50} />
       </Camera>
+      <ReadVeil keys={cam} />
       <Callout text="Nothing is bought without your yes" at={confirm + 14} outAt={duration - 20} />
     </>
   );
@@ -204,13 +255,13 @@ export const FoodScene: React.FC<SceneProps> = ({ duration }) => {
   const food = 40;
   const cups = 214;
   const cam: CamKey[] = [
-    at(0, 900, 560, 1.12),
-    at(food + 12, 900, 560, 1.12),
-    at(130, 1140, 470, READ),
-    at(cups - 40, 1140, 470, READ),
-    at(cups - 6, 900, 560, 1.12),
-    at(cups + 14, 900, 560, 1.12),
-    at(duration - 40, 1144, 460, READ + 0.04),
+    NEAR(0),
+    NEAR(food + 12),
+    read(130, 'sim-food'),
+    read(cups - 40, 'sim-food'),
+    NEAR(cups - 6),
+    NEAR(cups + 14),
+    read(duration - 40, 'sim-cups', 0.04),
   ];
   const cursor: CursorKey[] = [
     cur(0, 1150, 690),
@@ -227,6 +278,7 @@ export const FoodScene: React.FC<SceneProps> = ({ duration }) => {
         <Window states={[{ src: 'sim-paid', at: 0 }, { src: 'sim-food', at: food + 8 }, { src: 'sim-cups', at: cups + 8 }]} />
         <Cursor keys={cursor} visibleFrom={0} visibleTo={cups + 50} />
       </Camera>
+      <ReadVeil keys={cam} />
       <Callout text="It remembers: 2.5 cups a day" at={cups + 60} outAt={duration - 20} />
     </>
   );
@@ -234,7 +286,7 @@ export const FoodScene: React.FC<SceneProps> = ({ duration }) => {
 
 export const GroomScene: React.FC<SceneProps> = ({ duration }) => {
   const click = 40;
-  const cam: CamKey[] = [at(0, 900, 580, 1.1), at(click + 12, 900, 580, 1.1), at(140, 1172, 440, READ), at(duration, 1176, 450, READ + 0.04)];
+  const cam: CamKey[] = [NEAR(0), NEAR(click + 12), read(140, 'sim-groom'), read(duration, 'sim-groom', 0.04)];
   const cursor: CursorKey[] = [cur(0, 1150, 700), cur(30, ...center('chipGroom')), clickOn(click, 'chipGroom'), cur(click + 40, 1000, 740)];
   return (
     <>
@@ -242,6 +294,7 @@ export const GroomScene: React.FC<SceneProps> = ({ duration }) => {
         <Window states={[{ src: 'sim-cups', at: 0 }, { src: 'sim-groom', at: click + 8 }]} />
         <Cursor keys={cursor} visibleFrom={0} visibleTo={click + 50} />
       </Camera>
+      <ReadVeil keys={cam} />
       <Callout text="The morning slot you asked for" at={150} outAt={duration - 20} />
     </>
   );
