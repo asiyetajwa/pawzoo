@@ -1,6 +1,8 @@
 # Devpost Submission Draft
 
-Fill in the parts marked **TODO** before submitting. Submit by Friday 18:00 EAT (08:00 PT), four hours before the deadline.
+Copy each section into the Devpost form. Submit by Friday 18:00 EAT (08:00 PT), four hours before the deadline. Upload `docs/thumbnail.jpg` as the thumbnail and the demo film (`demo/out/PawzooLandscape.mp4`, on YouTube) as the video.
+
+Music and sound in the film were generated with ElevenLabs (Music and Sound Effects); the narration is the ElevenLabs voice Jessica.
 
 ## Project name
 
@@ -13,7 +15,7 @@ Ring sees your dog's day. Alexa+ acts on it. Fire TV shows it.
 ## Tracks and mini challenges
 
 - Primary tracks: **Alexa+**, **Ring**, **Fire TV** (Emerson Sklar confirmed on the forum that one project may enter several tracks and win at most one).
-- Mini challenges: **AWS Builder** (Amazon Bedrock, Amazon DynamoDB, Kiro if used) and **Open Source** (**TODO**: contribution URL).
+- Mini challenge: **AWS Builder** (Amazon Bedrock with Amazon Nova 2 Lite, Amazon DynamoDB).
 
 ## Description
 
@@ -21,7 +23,7 @@ More than half of American homes have a dog, and many of them already have Ring 
 
 **Ring sees.** Pawzoo receives signed Ring webhooks and asks the Ring API what moved: a person, an animal or both. From that it knows when the walker arrived, when they left with the dog and when they came back, when the dog had breakfast, napped or did zoomies, and when the dog went out of the front door with no one.
 
-**Alexa+ acts.** Pawzoo is a self-hosted MCP server (spec 2025-11-25, Streamable HTTP) with 13 tools and MCP Apps cards. Ask "How was Biscuit's day?" and hear a short answer. Pawzoo checks the walk against the camera ("35 minutes of the 30 booked; this week's only short one was Tuesday, at 18"). It projects when the food runs out and offers to reorder before it does. It pays and tips the walker and books the groomer on the morning slot the family said works best. It remembers what you tell it: "she's on two and a half cups a day now" moves the food forecast. Nothing spends money or books time without a yes: every quote carries a one-time confirmation that only the person's "yes" or a tap on the card can use.
+**Alexa+ acts.** Pawzoo is a self-hosted MCP server (spec 2025-11-25, Streamable HTTP) with 13 tools and MCP Apps cards. Ask "How was Biscuit's day?" and hear a short answer. Pawzoo checks the walk against the camera ("35 minutes of the 30 booked; this week's only short one was two days ago, at 18"). It projects when the food runs out and offers to reorder before it does. It pays and tips the walker and books the groomer on the morning slot the family said works best. It remembers what you tell it: "she's on two and a half cups a day now" moves the food forecast. Nothing spends money or books time without a yes: every quote carries a one-time confirmation that only the person's "yes" or a tap on the card can use.
 
 **Fire TV shows.** At 7 PM the family watches "Biscuit's Day", a reel cut from the day's camera clips. Move through the moments with the remote, or ask Alexa+ "show me when Maya got home on the TV" and it jumps there. If the dog gets out, Pawzoo announces it and the TV switches to the front door camera.
 
@@ -36,9 +38,10 @@ Pawzoo is a new project, started on October 21, 2026. Every file in the reposito
 ## Testing instructions
 
 1. Install Node.js 22+. `npm run setup`, then `npm start`.
-2. Open http://127.0.0.1:8787 and click "How Was Biscuit's Day?". Use "Under the Hood" to see MCP traffic and the demo controls (jump the clock, make the dog get out, reset).
-3. Open http://127.0.0.1:8787/tv.html for the TV in a browser, or install the APK from the repo's Releases on a Fire TV or the Android TV emulator.
-4. `npm test` runs twelve tests, ten of them end to end through a real MCP client.
+2. Open http://127.0.0.1:8787 and click "How Was Biscuit's Day?", then the other suggestions ("Yes" answers the latest question). Use "Under the Hood" to see MCP traffic and the demo controls (jump the clock, make the dog get out, reset). The demo opens at 7 PM with the whole day on camera.
+3. Open http://127.0.0.1:8787/tv.html for the TV in a browser.
+4. Fire TV: install [`pawzoo-tv.apk`](https://github.com/asiyetajwa/pawzoo/releases/latest/download/pawzoo-tv.apk) (Fire TV, Android TV emulator, or any Android phone or tablet). It plays a built-in sample day with no server. To go live, run `npm run start:tv` and type the address it prints into the app's Connect screen.
+5. `npm test` runs thirteen tests, eleven of them end to end through a real MCP client.
 
 No accounts or credentials are needed.
 
@@ -57,31 +60,31 @@ No accounts or credentials are needed.
 - **Used for:** webhook verification (HMAC-SHA256 `X-Signature`), device list, event history (human, animal, vehicle classes), clip and snapshot download.
 - **Worked well:** signed webhooks, clear media download endpoints, the elder care and pet use cases in the developer portal, and the replay-mode guidance on the hackathon forum.
 - **Needs work:** the motion class is not on the `motion_detected` webhook, so every event needs a second call to event history. The API reference is one very long page. There is no official SDK.
-- **Onboarding:** **TODO** (Brian: your experience creating the Ring developer account and Playground token).
+- **Onboarding:** we have no Ring camera, so we built from the API reference and ran in replay mode, which the organisers approved on the forum. The reference was enough to write signature verification, event history and media download, but we could not exercise them against a live account. A public sandbox with a sample device and recorded events would let entrants without hardware test the real calls.
 - **Build again:** Yes. Cameras people already own are the cheapest way to sense a home.
 
 ### React Native for TV (react-native-tvos), Expo, Amazon's react-native-multi-tv-app-sample
 
 - **Used for:** the Fire OS app: D-pad focus, media keys, video playback, live casts.
 - **Worked well:** the sample's Expo config plugins (TV banner, Kotlin settings) carried straight over; `hasTVPreferredFocus` and `useTVEventHandler` covered remote control.
-- **Needs work:** **TODO** after testing on the emulator.
-- **Onboarding:** **TODO**.
-- **Build again:** **TODO**.
+- **Needs work:** the Android TV emulator needs hardware virtualisation, which our cloud build machine lacks, so we checked layouts by rendering the same components with react-native-web and checked the APK with aapt. `fetch` in React Native has no default timeout: our first APK waited forever for a server it could not reach and showed an empty screen, so every request now has a timeout and the app ships a sample day. Fire TV reports 960x540 dp, so sizes must be planned in dp from the start. npm rejects some peer ranges against the `react-native-tvos` prerelease version (we set `legacy-peer-deps`).
+- **Onboarding:** about half a day from the sample's configuration to a signed APK, most of it Gradle and Maven downloads.
+- **Build again:** Yes. One React Native codebase covered the Fire TV remote, phones and tablets.
 
 ### Amazon Bedrock
 
 - **Used for:** the spoken evening digest and the simulator's tool selection from the live MCP tools/list, both through the Converse API, with Amazon Nova 2 Lite (`us.amazon.nova-2-lite-v1:0`, a US cross-region inference profile).
 - **Worked well:** one API (Converse, with tool use) for any model, so changing models is one environment variable.
-- **Needs work:** models differ in what they accept: some reject `temperature` (we retry without it) and we strip the `$schema` keyword from MCP tool schemas before passing them as Converse tools. A per-model list of supported inference parameters and JSON Schema keywords in the Converse docs would save trial and error. **TODO** (Brian): model access request experience and the latency you saw in `npm run check:aws`.
+- **Needs work:** models differ in what they accept: some reject `temperature` (we retry without it) and we strip the `$schema` keyword from MCP tool schemas before passing them as Converse tools. A per-model list of supported inference parameters and JSON Schema keywords in the Converse docs would save trial and error.
+- **Onboarding:** model access was a short request in the console. The first model we picked was not available to our account, so we moved to Amazon Nova 2 Lite through its US cross-region inference profile; `npm run check:aws` then answered in about 1.4 seconds. The difference between a model ID and an inference profile ID (the `us.` prefix) is easy to miss.
+- **Build again:** Yes.
 
 ### Amazon DynamoDB
 
 - **Used for:** the household's state (one item per household).
-- **TODO** (Brian): table setup experience.
-
-### Kiro
-
-- **TODO**: only include if Kiro was used during the build, and say for what.
+- **Worked well:** created in the console in a minute (on-demand, partition key `householdId`, String); one item per household fits the app, and `npm run check:aws` confirms the table and its key before the demo.
+- **Needs work:** nothing in DynamoDB itself. Our one snag was our own: a stale `.env` pointing at an older table name, which is why Pawzoo now prints the table it uses and falls back to a local file, saying so, if the table cannot be reached.
+- **Build again:** Yes.
 
 ## Feature requests (optional)
 

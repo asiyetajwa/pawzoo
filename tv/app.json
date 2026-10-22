@@ -2,13 +2,17 @@
   "expo": {
     "name": "Pawzoo",
     "slug": "pawzoo-tv",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "orientation": "default",
     "backgroundColor": "#15110e",
     "newArchEnabled": false,
     "android": {
       "package": "com.pawzoo.tv",
-      "versionCode": 2
+      "versionCode": 3,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#fbbf24"
+      }
     },
     "extra": {
       "serverUrl": "http://10.0.2.2:8787"
@@ -53,6 +57,7 @@
           "enableCacheExtension": false
         }
       ]
-    ]
+    ],
+    "icon": "./assets/icon.png"
   }
 }
