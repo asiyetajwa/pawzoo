@@ -60,7 +60,7 @@ No accounts or credentials are needed.
 - **Used for:** webhook verification (HMAC-SHA256 `X-Signature`), device list, event history (human, animal, vehicle classes), clip and snapshot download.
 - **Worked well:** signed webhooks, clear media download endpoints, the elder care and pet use cases in the developer portal, and the replay-mode guidance on the hackathon forum.
 - **Needs work:** the motion class is not on the `motion_detected` webhook, so every event needs a second call to event history. The API reference is one very long page. There is no official SDK.
-- **Onboarding:** we have no Ring camera, so we built from the API reference and ran in replay mode, which the organisers approved on the forum. The reference was enough to write signature verification, event history and media download, but we could not exercise them against a live account. A public sandbox with a sample device and recorded events would let entrants without hardware test the real calls.
+- **Onboarding:** we created a Ring developer account, but we have no Ring camera, so we built from the API reference and ran in replay mode, which the organisers approved on the forum. The reference was enough to write signature verification, event history and media download, but we could not exercise them against a live account. A public sandbox with a sample device and recorded events would let entrants without hardware test the real calls.
 - **Build again:** Yes. Cameras people already own are the cheapest way to sense a home.
 
 ### React Native for TV (react-native-tvos), Expo, Amazon's react-native-multi-tv-app-sample
