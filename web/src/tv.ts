@@ -74,16 +74,56 @@ function next(): void {
 video.addEventListener('error', () => reel && showStill(reel.chapters[index]));
 video.addEventListener('ended', next);
 
+/** Shrinks the big title until its longest line fits inside the blob. */
+function fitTitle(el: HTMLElement): void {
+  el.style.fontSize = '';
+  const blob = el.parentElement?.querySelector<HTMLElement>('.blob');
+  if (!blob) return;
+  const room = blob.clientWidth - el.offsetLeft - blob.clientWidth * 0.06;
+  const widest = Math.max(...[...el.children].map((c) => (c as HTMLElement).scrollWidth));
+  if (widest > room && room > 0) el.style.fontSize = `${String(Math.floor((parseFloat(getComputedStyle(el).fontSize) * room) / widest))}px`;
+}
+window.addEventListener('resize', () => document.querySelectorAll<HTMLElement>('.display').forEach(fitTitle));
+
+async function showAlert(alert: { message: string; eventId: string }, day?: Any): Promise<void> {
+  video.pause();
+  player.hidden = true;
+  home.hidden = true;
+  alertEl.hidden = false;
+  fitTitle(alertEl.querySelector<HTMLElement>('.display')!);
+  $('#alert-text').textContent = alert.message;
+  const d = day ?? (await (await fetch('/api/day')).json());
+  const ev = d.summary.moments.find((x: Any) => x.eventId === alert.eventId);
+  $<HTMLImageElement>('#alert-still').src = ev ? media(ev.snapshot) : '';
+  $<HTMLButtonElement>('#dismiss').focus();
+}
+
 async function showHome(): Promise<void> {
   const day = await (await fetch('/api/day')).json();
   video.pause();
   player.hidden = true;
+  // Opened after the dog got out: the alert is what this screen should be showing.
+  const open = (day.summary.openAlerts ?? []) as Any[];
+  if (open.length && alertEl.hidden && !dismissed.has(open[0].id)) {
+    await showAlert(open[0] as { message: string; eventId: string }, day);
+    return;
+  }
   if (!alertEl.hidden) return;
   home.hidden = false;
   title.innerHTML = `<span>${day.pet.name}'s</span><span>Day</span>`;
-  $('#summary').innerHTML = (day.summary.highlights as string[]).map((h) => `<li>${h}</li>`).join('') || '<li>Nothing yet today.</li>';
+  fitTitle(title);
+  $('#summary').innerHTML = (day.summary.highlights as string[]).map((h) => `<li>${h.replace(/(\d) (AM|PM)/g, '$1\u00a0$2')}</li>`).join('') || '<li>Nothing yet today.</li>';
   $<HTMLButtonElement>('#play').focus();
 }
+
+/** Alerts dismissed on this screen only; Alexa+ "she's back inside" clears them everywhere. */
+const dismissed = new Set<string>();
+$('#dismiss').addEventListener('click', async () => {
+  const day = await (await fetch('/api/day')).json();
+  ((day.summary.openAlerts ?? []) as Any[]).forEach((a) => dismissed.add(a.id));
+  alertEl.hidden = true;
+  void showHome();
+});
 
 $('#play').addEventListener('click', async () => {
   await loadReel();
@@ -119,17 +159,8 @@ es.onmessage = async (m) => {
     }
     if (p.target !== 'home' && p.target !== 'alert') alertEl.hidden = true;
   }
-  if (p.type === 'alert') {
-    video.pause();
-    player.hidden = true;
-    home.hidden = true;
-    alertEl.hidden = false;
-    $('#alert-text').textContent = p.alert.message;
-    const day = await (await fetch('/api/day')).json();
-    const ev = day.summary.moments.find((x: Any) => x.eventId === p.alert.eventId);
-    $<HTMLImageElement>('#alert-still').src = ev ? media(ev.snapshot) : '';
-  }
-  if (p.type === 'state' && p.reason === 'alert_resolved') {
+  if (p.type === 'alert') await showAlert(p.alert);
+  if (p.type === 'state' && (p.reason === 'alert_resolved' || p.reason === 'reset')) {
     alertEl.hidden = true;
     void showHome();
   }

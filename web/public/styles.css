@@ -83,7 +83,7 @@ a { color: inherit; }
 .timeline i { width: 18px; height: 1px; background: var(--muted); opacity: .5; }
 .step { width: 44px; height: 44px; border-radius: 14px; border: 0; background: var(--band); color: var(--muted); cursor: pointer; display: grid; place-items: center; font-size: 12px; font-weight: 600; transition: background .2s, color .2s; }
 .step[aria-current="true"] { background: var(--press); color: var(--press-ink); }
-.step:hover { color: var(--ink); }
+.step:not([aria-current="true"]):hover { color: var(--ink); }
 .clock { margin-left: 8px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .dock { position: absolute; right: calc(5% + 64px); bottom: 5.5%; display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 10px; width: min(40%, 520px); background: var(--board); border-radius: 999px; box-shadow: var(--dock-shadow); z-index: 4; }

@@ -446,7 +446,7 @@ function Home({
     >
       {rows.map((h, i) => (
         <Text key={h} style={[s.row, i % 2 === 0 && s.rowBand]}>
-          {h}
+          {h.replace(/(\d) (AM|PM)/g, '$1\u00a0$2')}
         </Text>
       ))}
     </Board>

@@ -5,7 +5,7 @@ import { App } from '@modelcontextprotocol/ext-apps';
 
 type Any = Record<string, any>;
 
-const app = new App({ name: 'pawzoo-card', version: '0.1.0' }, {}, { autoResize: true });
+const app = new App({ name: 'pawzoo-card', version: '1.0.0' }, {}, { autoResize: true });
 const root = document.getElementById('root')!;
 
 function esc(s: unknown): string {

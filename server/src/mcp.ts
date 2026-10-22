@@ -53,7 +53,7 @@ const dateArg = z
 
 export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer {
   const server = new McpServer(
-    { name: 'pawzoo', title: 'Pawzoo', version: '0.1.0' },
+    { name: 'pawzoo', title: 'Pawzoo', version: '1.0.0' },
     {
       instructions:
         "Pawzoo knows what the family's dog did today from their Ring cameras, and can reorder food, pay the dog walker and book care. " +

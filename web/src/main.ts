@@ -184,7 +184,7 @@ async function showCard(toolName: string, args: Any, result: Any): Promise<void>
   // No client passed: the host handles the card's tool calls itself, so a tap is logged, remembered and spoken.
   const bridge = new AppBridge(
     null,
-    { name: 'Pawzoo Alexa+ simulator', version: '0.1.0' },
+    { name: 'Pawzoo Alexa+ simulator', version: '1.0.0' },
     { serverTools: {}, logging: {} },
     { hostContext: { theme: currentTheme(), displayMode: 'inline' } },
   );
