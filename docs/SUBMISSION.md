@@ -9,7 +9,7 @@ Copy each section into the Devpost form. Deadline: Friday 23 October 2026, 12:00
 - **Fire TV app (APK):** https://github.com/asiyetajwa/pawzoo/releases/latest/download/pawzoo-tv.apk (release page: https://github.com/asiyetajwa/pawzoo/releases/tag/v0.3.0)
 - **Thumbnail:** `docs/thumbnail.jpg` (3:2) in the repo: https://github.com/asiyetajwa/pawzoo/blob/main/docs/thumbnail.jpg
 
-Music and sound in the film were generated with ElevenLabs (Music and Sound Effects) on Brian's ElevenLabs account; the narration is the ElevenLabs voice Jessica. The rules bar copyrighted music without permission: confirm the account's plan grants commercial use of generated audio.
+Music and sound in the film were generated with ElevenLabs (Music and Sound Effects) on Brian's ElevenLabs account; the narration is the ElevenLabs voice Jessica. Brian confirmed the account's rights cover their use in the video.
 
 ## Project name
 
@@ -22,7 +22,7 @@ Ring sees your dog's day. Alexa+ acts on it. Fire TV shows it.
 ## Tracks and mini challenges
 
 - Primary tracks: **Alexa+** (simulated Alexa+ path: the simulator is a real MCP client over Streamable HTTP, which the FAQ accepts) and **Ring** (replay mode, approved on the forum). A project can win at most one track prize and one mini challenge prize.
-- **Fire TV: Brian's decision.** The rules say the demo video must show "the project running on an actual Fire TV device or the Fire TV/Vega simulator". The film shows the TV experience as the browser preview in a TV frame, not the APK on Fire TV or its simulator. Enter Fire TV only if a clip of the APK running in the Fire TV/Vega simulator or the Android TV emulator is added to the video first.
+- **Fire TV: not entered** (Brian's decision). The rules require the video to show the APK on a Fire TV device or the Fire TV/Vega simulator; the film shows the browser preview. The Fire TV app is still in the repo and the release.
 - Mini challenge: **AWS Builder** (Amazon Bedrock with Amazon Nova 2 Lite, Amazon DynamoDB; described under Product feedback as required). Not entered: Open Source (needs a separate open-source contribution URL).
 
 ## Built with
