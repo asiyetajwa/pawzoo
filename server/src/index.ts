@@ -156,12 +156,12 @@ app.post('/api/digest/deliver', (req, res) => {
 
 // The assistant brain behind the voice assistant simulator: turns an utterance into tool calls.
 app.post('/api/assistant', async (req, res) => {
-  const body = req.body as { utterance?: string; tools?: unknown; history?: unknown };
+  const body = req.body as { utterance?: string; tools?: unknown; history?: unknown; results?: unknown };
   if (!body.utterance) {
     res.status(400).json({ error: 'utterance required' });
     return;
   }
-  res.json(await assistantTurn(body.utterance, body.tools, body.history));
+  res.json(await assistantTurn(body.utterance, body.tools, body.history, body.results));
 });
 
 // Demo controls for presenters and judges. They drive the replayed Ring day, never real devices.

@@ -110,6 +110,12 @@ test('the standalone job can deliver a digest only with the job token', async ()
   assert.equal(evening.last?.trigger, 'job');
 });
 
+test('a follow-up step shows Nemotron the results so far', async () => {
+  await assistantTurn('Show me when the walker came on the TV', [{ name: 'check_food', description: 'x' }], [], [{ name: 'find_moment', said: 'I found 3 moments.' }]);
+  const last = seen.filter((s) => s.tools).at(-1)!;
+  assert.match(last.messages[1].content, /Tool results so far for this request:\n- find_moment: I found 3 moments\./);
+});
+
 test('the spend cap refuses calls and Pawzoo falls back to rules', async () => {
   // Spend recorded earlier (by this or another run on the same ledger) brings it to just under the cap.
   appendFileSync(process.env.PAWZOO_LEDGER!, `${JSON.stringify({ at: new Date().toISOString(), kind: 'chat', model: 'x', usd: 0.01 - spentUsd() - 0.00001 })}\n`);

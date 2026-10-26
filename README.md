@@ -14,7 +14,7 @@ Pawzoo is a pet-care agent. It is an MCP server any voice assistant or AI host c
 Pawzoo was first built October 21 to 23, 2026, for an Amazon hackathon (https://devpost.com/software/pawzoo), on Amazon Bedrock. That build is on `main` and is unchanged. This branch, `nebius`, is the edition for the Nebius x NVIDIA Global AI Hackathon:
 
 1. **The model layer runs on NVIDIA Nemotron via Nebius Token Factory.**
-   - Nemotron 3 Super picks Pawzoo's tools from the live MCP `tools/list`, through OpenAI-style tool calling.
+   - Nemotron 3 Super picks Pawzoo's tools from the live MCP `tools/list`, through OpenAI-style tool calling. It sees each step's tool results before choosing the next, up to two steps a question.
    - Nemotron 3 Nano phrases the day's facts into a short spoken update.
 
    One module changed (`server/src/nemotron.ts` replaced `bedrock.ts`). Everything that decides anything (the day, the food forecast, quotes, bookings, payments, alerts) is plain code that never calls a model, so the swap touched nothing else.
@@ -35,10 +35,14 @@ Pawzoo was first built October 21 to 23, 2026, for an Amazon hackathon (https://
 
 | Call | Model | Typical tokens | Typical time | Typical cost |
 |---|---|---|---|---|
-| A conversation turn (pick tools) | Nemotron 3 Super | about 1,850 | about 1.0 s | about $0.0006 |
-| The evening digest (phrase) | Nemotron 3 Nano | about 570 | about 1.5 s | about $0.00005 |
+| One step of a question (pick tools) | Nemotron 3 Super | about 1,900 | about 1 s | about $0.0006 |
+| The evening digest (phrase) | Nemotron 3 Nano | about 500 | about 1 s | about $0.00005 |
 
-At these prices, a household's month of 10 questions a day plus the evening digest comes to about **$0.18**.
+A question takes one or two steps:
+1. Nemotron picks tools.
+2. It sees what the tools returned and either takes one more step (for example, playing on the TV the moment it found) or stops.
+
+So a question costs about **$0.0012**. A household's month of 10 questions a day plus the evening digest comes to about **$0.36**.
 
 The `nebius` branch does not deploy the MCP server on Nebius compute or run the digest job as a Serverless Job. Both would bill compute beyond the Token Factory credit this project had. The image and the job are ready for it, and the steps are below.
 

@@ -260,12 +260,11 @@ function fill(args: Any): Any {
   return out;
 }
 
-async function turn(utterance: string): Promise<void> {
-  const text = utterance.trim();
-  if (!text) return;
-  heard(text);
-  setLight('thinking');
-  const plan = (await (
+type Plan = { calls: Array<{ name: string; arguments: Any }>; say?: string; source: string; modelId?: string };
+
+/** Asks the assistant for the next tool calls. `results` are what earlier calls in this request returned. */
+async function plan(text: string, results: Array<{ name: string; said: string }>): Promise<Plan> {
+  const out = (await (
     await fetch('/api/assistant', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -273,64 +272,85 @@ async function turn(utterance: string): Promise<void> {
         utterance: text,
         tools: tools.map((t) => ({ name: t.name, description: t.description, inputSchema: t.inputSchema })),
         history: history.slice(-6),
+        results,
       }),
     })
-  ).json()) as { calls: Array<{ name: string; arguments: Any }>; say?: string; source: string; modelId?: string };
-  $('#brain').textContent = plan.source === 'nemotron' ? `${plan.modelId ?? 'Nemotron'} on Nebius` : 'rules (offline)';
+  ).json()) as Plan;
+  $('#brain').textContent = out.source === 'nemotron' ? `${out.modelId ?? 'Nemotron'} on Nebius` : 'rules (offline)';
   void refreshCalls();
+  return out;
+}
 
-  if (!plan.calls.length) {
+/** At most this many model steps per request: the model sees each step's results before choosing the next. */
+const MAX_STEPS = 2;
+
+async function turn(utterance: string): Promise<void> {
+  const text = utterance.trim();
+  if (!text) return;
+  heard(text);
+  setLight('thinking');
+  let current = await plan(text, []);
+
+  if (!current.calls.length) {
     // "No", or anything else that isn't a tool call, moves on: nothing is left waiting for a yes.
     memory.offer = undefined;
     memory.lastConfirmation = undefined;
-    say(plan.say ?? 'Sorry, I missed that.');
+    say(current.say ?? 'Sorry, I missed that.');
     return;
   }
   let spoken = '';
-  for (const planned of plan.calls) {
-    let call: Call = planned;
-    let args = fill(call.arguments);
-    // A placeholder with nothing behind it yet: answer in plain words, or take the step it needs first.
-    const unresolved = Object.entries(call.arguments).find(([k, v]) => typeof v === 'string' && v.startsWith('$') && args[k] === undefined)?.[1];
-    if (unresolved === '$last_confirmation') {
-      if (!memory.offer) {
-        say("There's nothing waiting for a yes right now.");
+  const done: Array<{ name: string; said: string }> = [];
+  for (let step = 1; step <= MAX_STEPS && current.calls.length; step++) {
+    for (const planned of current.calls) {
+      let call: Call = planned;
+      let args = fill(call.arguments);
+      // A placeholder with nothing behind it yet: answer in plain words, or take the step it needs first.
+      const unresolved = Object.entries(call.arguments).find(([k, v]) => typeof v === 'string' && v.startsWith('$') && args[k] === undefined)?.[1];
+      if (unresolved === '$last_confirmation') {
+        if (!memory.offer) {
+          say("There's nothing waiting for a yes right now.");
+          return;
+        }
+        call = memory.offer;
+        args = call.arguments;
+      } else if (unresolved === '$recommended_slot') {
+        call = { name: 'find_care_slots', arguments: { service: 'grooming' } };
+        args = call.arguments;
+      } else if (unresolved === '$first_moment') {
+        say("I couldn't find that moment on camera today.");
+        return;
+      } else if (unresolved === '$open_alert') {
+        say("There's no open alert. Biscuit is safe at home.");
         return;
       }
-      call = memory.offer;
-      args = call.arguments;
-    } else if (unresolved === '$recommended_slot') {
-      call = { name: 'find_care_slots', arguments: { service: 'grooming' } };
-      args = call.arguments;
-    } else if (unresolved === '$first_moment') {
-      say("I couldn't find that moment on camera today.");
-      return;
-    } else if (unresolved === '$open_alert') {
-      say("There's no open alert. Biscuit is safe at home.");
-      return;
+      const result = (await client.callTool({ name: call.name, arguments: args })) as Any;
+      remember(call.name, result);
+      if (call.name === 'get_pet_day') {
+        const sc = result.structuredContent ?? {};
+        $('#digest').textContent = sc.digestSource === 'nemotron' ? `${sc.digestModel} on Nebius` : 'template (Nemotron off or failed)';
+        void refreshCalls();
+      }
+      const scene = sceneFor(call.name, result);
+      if (scene) setScene(scene);
+      const line = result.structuredContent?.say ?? result.content?.[0]?.text ?? '';
+      if (result.isError) {
+        say(line || 'That did not work.');
+        return;
+      }
+      // Nothing found: say so and stop, rather than play an older moment on the TV.
+      if (call.name === 'find_moment' && !result.structuredContent?.moments?.length) {
+        say(line);
+        return;
+      }
+      done.push({ name: call.name, said: line });
+      spoken = spoken ? `${spoken} ${line}` : line;
+      const tool = tools.find((t) => t.name === call.name);
+      if (tool?._meta?.ui?.resourceUri) await showCard(call.name, args, result);
     }
-    const result = (await client.callTool({ name: call.name, arguments: args })) as Any;
-    remember(call.name, result);
-    if (call.name === 'get_pet_day') {
-      const sc = result.structuredContent ?? {};
-      $('#digest').textContent = sc.digestSource === 'nemotron' ? `${sc.digestModel} on Nebius` : 'template (Nemotron off or failed)';
-      void refreshCalls();
-    }
-    const scene = sceneFor(call.name, result);
-    if (scene) setScene(scene);
-    const line = result.structuredContent?.say ?? result.content?.[0]?.text ?? '';
-    if (result.isError) {
-      say(line || 'That did not work.');
-      return;
-    }
-    // Nothing found: say so and stop, rather than play an older moment on the TV.
-    if (call.name === 'find_moment' && !result.structuredContent?.moments?.length) {
-      say(line);
-      return;
-    }
-    spoken = spoken ? `${spoken} ${line}` : line;
-    const tool = tools.find((t) => t.name === call.name);
-    if (tool?._meta?.ui?.resourceUri) await showCard(call.name, args, result);
+    // The model sees what its tools returned and may take one more step (play the moment it found, say).
+    if (current.source !== 'nemotron' || step === MAX_STEPS) break;
+    const next = await plan(text, done);
+    current = { ...next, calls: next.calls.filter((c) => !done.some((d) => d.name === c.name)) };
   }
   say(spoken);
 }

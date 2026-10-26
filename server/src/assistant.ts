@@ -76,6 +76,7 @@ const SYSTEM = `You are a home voice assistant using the Pawzoo add-on for the f
 Choose the Pawzoo tools that answer the person. Call tools; do not answer from your own knowledge.
 Money or bookings: first call the quote_ tool; call confirm_action only when the person says yes, with confirmation_id "$last_confirmation".
 To act on earlier results use these placeholders exactly: "$first_moment" (an event_id), "$recommended_slot" (a slot_id), "$open_alert" (an alert_id), "$last_walk" (a walk_id).
+You may see "Tool results so far" for this request: if the request still needs a step (for example playing on the TV a moment that find_moment found, with event_id "$first_moment"), call that tool; if it is complete, call no tool and reply with an empty answer.
 Use at most two tools. Never give medical or veterinary advice.`;
 
 /** MCP tool schemas carry a "$schema" keyword that tool-calling APIs reject; the rest passes through. */
@@ -86,16 +87,17 @@ export function toolSchema(schema: Record<string, unknown> | undefined): Record<
 
 let turn = 0;
 
-export async function planWithNemotron(utterance: string, tools: McpToolSummary[], history: unknown): Promise<AssistantPlan | null> {
+export async function planWithNemotron(utterance: string, tools: McpToolSummary[], history: unknown, results: unknown = []): Promise<AssistantPlan | null> {
   if (!nemotron() || !tools.length) return null;
   try {
     const recent = Array.isArray(history) ? (history as Array<{ role: string; text: string }>).slice(-6) : [];
+    const done = Array.isArray(results) ? (results as Array<{ name: string; said: string }>).slice(0, 4) : [];
     const context = recent.map((h) => `${h.role}: ${h.text}`).join('\n');
     const out = await chooseTools(
       SYSTEM,
-      `${context ? `Conversation so far:\n${context}\n\n` : ''}Person: ${utterance}`,
+      `${context ? `Conversation so far:\n${context}\n\n` : ''}Person: ${utterance}${done.length ? `\n\nTool results so far for this request:\n${done.map((r) => `- ${r.name}: ${r.said}`).join('\n')}` : ''}`,
       tools.map((t) => ({ name: t.name, description: (t.description ?? t.name).slice(0, 600), parameters: toolSchema(t.inputSchema) })),
-      `conversation turn ${String(++turn)}`,
+      done.length ? `conversation turn ${String(turn)} step 2` : `conversation turn ${String(++turn)}`,
     );
     const calls = (out.toolCalls ?? []).filter((c) => tools.some((t) => t.name === c.name)).slice(0, 2);
     const say = out.text.replace(/\s*[—–]\s*/g, ', ').trim() || undefined;
@@ -106,7 +108,11 @@ export async function planWithNemotron(utterance: string, tools: McpToolSummary[
   }
 }
 
-export async function assistantTurn(utterance: string, tools: unknown, history: unknown): Promise<AssistantPlan> {
+export async function assistantTurn(utterance: string, tools: unknown, history: unknown, results: unknown = []): Promise<AssistantPlan> {
   const list = Array.isArray(tools) ? (tools as McpToolSummary[]) : [];
-  return (await planWithNemotron(utterance, list, history)) ?? planWithRules(utterance);
+  const followUp = Array.isArray(results) && results.length > 0;
+  const plan = await planWithNemotron(utterance, list, history, results);
+  // A follow-up step without a model has nothing more to do: the rules already planned the whole request.
+  if (followUp) return plan ?? { calls: [], source: 'rules' };
+  return plan ?? planWithRules(utterance);
 }

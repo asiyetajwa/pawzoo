@@ -16,3 +16,8 @@ demo/public/voiceover/
 demo/public/sfx/
 tv/.expo/
 .pawzoo-ledger.jsonl
+film/node_modules
+film/out/
+film/public/voiceover/
+film/public/music/
+film/public/sfx/
