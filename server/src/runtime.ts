@@ -12,7 +12,8 @@ export type Push =
   | AgentNotice
   | { type: 'cast'; target: 'day_reel' | 'moment' | 'alert' | 'home'; eventId?: string; date?: string }
   | { type: 'clock'; now: string; local: string; pinned: boolean }
-  | { type: 'state'; reason: string };
+  | { type: 'state'; reason: string }
+  | { type: 'digest'; digest: { text: string; source: string; modelId?: string; date: string; local: string; trigger: string } };
 
 export interface RuntimeOptions {
   store: Store;

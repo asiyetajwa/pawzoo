@@ -14,7 +14,9 @@ import { Runtime, type Push } from './runtime.js';
 import { storeFromEnv } from './store.js';
 import { dayReel, daySummary, foodProjection } from './agent.js';
 import { assistantTurn } from './assistant.js';
-import { bedrockModel } from './bedrock.js';
+import { MODELS, modelLabel, nemotron, recentCalls, spentUsd, totals } from './nemotron.js';
+import { EveningDigest, type DeliveredDigest } from './schedule.js';
+import { timingSafeEqual } from 'node:crypto';
 import { speak, voiceConfig } from './voice.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -27,6 +29,13 @@ const ringSecret = process.env.RING_WEBHOOK_SECRET ?? 'pawzoo-replay-signing-key
 if (!process.env.RING_WEBHOOK_SECRET) console.warn('[ring] RING_WEBHOOK_SECRET not set: only replay webhooks will verify.');
 
 export const rt = new Runtime({ store: storeFromEnv(), mediaDir, ringSecret, demoDate: process.env.PAWZOO_DEMO_DATE });
+
+export const evening = new EveningDigest(rt);
+// The digest fires when Pawzoo's clock crosses the digest time, whether the clock is live or set in the demo.
+rt.bus.on('push', (p: Push) => {
+  if (p.type === 'clock') void evening.tick().catch((err: unknown) => console.warn('[digest] scheduled run failed:', (err as Error).message));
+});
+setInterval(() => rt.pushClock(), 30_000).unref();
 
 export const app = express();
 app.disable('x-powered-by');
@@ -91,8 +100,7 @@ app.get('/api/status', (_req, res) => {
   res.json({
     store: rt.store.kind,
     storeError: rt.storeError,
-    bedrockModel: bedrockModel(),
-    region: process.env.AWS_REGION ?? null,
+    nemotron: nemotron() ? { tools: modelLabel(MODELS.tools), phrase: modelLabel(MODELS.phrase) } : null,
     ring: rt.ring ? 'live' : 'replay',
     voice: voice.enabled ? { provider: 'elevenlabs', voiceId: voice.voiceId, modelId: voice.modelId } : null,
   });
@@ -119,7 +127,34 @@ app.post('/api/voice', async (req, res) => {
   }
 });
 
-// The assistant brain behind the Alexa+ simulator: turns an utterance into tool calls.
+// The cost and latency panel: every Nemotron call this run, newest first, with totals per conversation and digest.
+app.get('/api/calls', (_req, res) => {
+  res.set('cache-control', 'no-store').json({ calls: recentCalls(), totals: totals(), spentUsd: spentUsd(), capUsd: Number(process.env.PAWZOO_BUDGET_USD ?? 0) });
+});
+
+// The evening digest: the last one written, a manual run, and delivery from the standalone job.
+app.get('/api/digest/last', (_req, res) => {
+  res.json({ at: evening.at, last: evening.last });
+});
+app.post('/api/digest/run', async (_req, res) => {
+  res.json(await evening.run('manual'));
+});
+app.post('/api/digest/deliver', (req, res) => {
+  const want = process.env.PAWZOO_JOB_TOKEN ?? '';
+  const got = (req.header('authorization') ?? '').replace(/^Bearer /, '');
+  if (!want || got.length !== want.length || !timingSafeEqual(Buffer.from(got), Buffer.from(want))) {
+    res.status(401).json({ error: 'job token required' });
+    return;
+  }
+  const d = req.body as Partial<DeliveredDigest>;
+  if (typeof d.text !== 'string' || !d.text.trim() || typeof d.date !== 'string') {
+    res.status(400).json({ error: 'text and date required' });
+    return;
+  }
+  res.json(evening.deliver({ text: d.text.slice(0, 1200), source: d.source === 'nemotron' ? 'nemotron' : 'template', modelId: d.modelId, date: d.date, local: d.local ?? '', trigger: 'job' }));
+});
+
+// The assistant brain behind the voice assistant simulator: turns an utterance into tool calls.
 app.post('/api/assistant', async (req, res) => {
   const body = req.body as { utterance?: string; tools?: unknown; history?: unknown };
   if (!body.utterance) {
@@ -199,7 +234,8 @@ if (process.env.PAWZOO_NO_LISTEN !== '1') {
       console.error('[startup] Could not replay the demo day:', (err as Error).message);
     }
     console.log(`Pawzoo on http://${host}:${port}  (MCP: /mcp, store: ${rt.store.kind}, demo date ${rt.demoDate})`);
-    console.log(`Bedrock: ${bedrockModel() ?? 'off (template answers)'}${bedrockModel() ? ` in ${process.env.AWS_REGION ?? 'the default region'}` : ''}`);
+    console.log(`Nemotron on Nebius Token Factory: ${nemotron() ? `${modelLabel(MODELS.tools)} picks tools, ${modelLabel(MODELS.phrase)} phrases (cap $${process.env.PAWZOO_BUDGET_USD ?? '0'})` : 'off (rules and templates; set NEBIUS_API_KEY and PAWZOO_BUDGET_USD)'}`);
+    console.log(`Evening digest: every day at ${evening.at} on Pawzoo's clock`);
     console.log(`Voice: ${voiceConfig().enabled ? `ElevenLabs (voice ${voiceConfig().voiceId})` : 'off (set ELEVENLABS_API_KEY in .env)'}`);
     if (host === '0.0.0.0') {
       const addresses = lanAddresses();

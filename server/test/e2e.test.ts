@@ -11,7 +11,7 @@ import type { Server } from 'node:http';
 process.env.PAWZOO_NO_LISTEN = '1';
 process.env.PAWZOO_DEMO_DATE = '2026-10-22';
 process.env.PAWZOO_STATE_FILE = join(mkdtempSync(join(tmpdir(), 'pawzoo-')), 'state.json');
-process.env.PAWZOO_BEDROCK = 'off';
+process.env.PAWZOO_NEMOTRON = 'off';
 process.env.PAWZOO_ENV_FILE = join(tmpdir(), 'pawzoo-no-env');
 delete process.env.ELEVENLABS_API_KEY;
 

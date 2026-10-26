@@ -164,3 +164,10 @@ body.hood-open .hood { transform: none; }
   .lightbar { top: 24px; right: 70px; }
   .suggestions { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; width: 100%; padding-bottom: 6px; }
 }
+
+/* Nemotron calls: cost and latency */
+.nemo-totals { display: grid; gap: 6px; margin-bottom: 8px; }
+.nemo-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.nemo-row span { color: var(--muted, #6b6b80); font-variant-numeric: tabular-nums; }
+#calls summary code { white-space: nowrap; }
+#calls summary span { font-variant-numeric: tabular-nums; white-space: nowrap; }

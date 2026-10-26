@@ -1,12 +1,12 @@
-// "How was Biscuit's day?" The facts come from agent.ts; Amazon Bedrock only phrases them.
-// With no AWS credentials, or if Bedrock fails, the template answer is used and the demo still works.
+// "How was Biscuit's day?" The facts come from agent.ts; NVIDIA Nemotron 3 Nano only phrases them.
+// With no Token Factory key, or if the call fails, the template answer is used and the demo still works.
 
-import { bedrockModel, converse, replyText } from './bedrock.js';
+import { MODELS, modelLabel, nemotron, phrase } from './nemotron.js';
 import type { DaySummary } from './agent.js';
 
 export interface DigestResult {
   text: string;
-  source: 'bedrock' | 'template';
+  source: 'nemotron' | 'template';
   modelId?: string;
 }
 
@@ -37,16 +37,15 @@ export function templateDigest(d: DaySummary): string {
   return parts.join(' ');
 }
 
-const SYSTEM = `You write the evening update a family hears from their smart speaker about their dog's day.
-Use only the facts in the JSON. Never invent events, times or numbers.
+const SYSTEM = `You write the evening update a family hears from their voice assistant about their dog's day.
+Use only the facts in the JSON. Never invent events, times or numbers. The dog is a girl: always she and her.
 Two to four short sentences, warm and plain, for speaking aloud. No lists, no emoji, no em dashes.
 Mention the walk and anything unusual. If food status is order_now or order_soon, end by offering to reorder.
 Never give medical or veterinary advice.`;
 
-export async function writeDigest(d: DaySummary): Promise<DigestResult> {
+export async function writeDigest(d: DaySummary, scope = 'digest asked'): Promise<DigestResult> {
   const fallback: DigestResult = { text: templateDigest(d), source: 'template' };
-  const modelId = bedrockModel();
-  if (!modelId) return fallback;
+  if (!nemotron()) return fallback;
   try {
     const facts = {
       pet: d.pet,
@@ -62,18 +61,11 @@ export async function writeDigest(d: DaySummary): Promise<DigestResult> {
       food: { status: d.food.status, runsOut: d.food.runsOutDay, daysLeft: d.food.daysLeft },
       openAlerts: d.openAlerts.map((a) => a.message),
     };
-    const out = await converse(
-      {
-        system: [{ text: SYSTEM }],
-        messages: [{ role: 'user', content: [{ text: JSON.stringify(facts) }] }],
-      },
-      { maxTokens: 1200, temperature: 0.4 },
-    );
-    const text = replyText(out);
+    const text = await phrase(`${SYSTEM}\nReply with only the update.`, JSON.stringify(facts), scope);
     if (!text) return fallback;
-    return { text: text.replace(/—/g, ', '), source: 'bedrock', modelId };
+    return { text: text.replace(/\s*[—–]\s*/g, ', '), source: 'nemotron', modelId: modelLabel(MODELS.phrase) };
   } catch (err) {
-    console.warn('[digest] Bedrock unavailable, using template:', (err as Error).message);
+    console.warn('[digest] Nemotron unavailable, using template:', (err as Error).message);
     return fallback;
   }
 }

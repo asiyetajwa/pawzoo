@@ -1,7 +1,8 @@
-// Pawzoo, simulated as an Alexa+ add-on on a screen device.
+// Pawzoo in a voice assistant simulator on a screen device.
 // The page is a real MCP client: it connects to the Pawzoo server, lists its tools, calls them,
 // and renders the MCP Apps card the server returns. An assistant endpoint chooses the tools
-// (Amazon Bedrock when configured, rules otherwise), standing in for Alexa+ itself.
+// (NVIDIA Nemotron on Nebius Token Factory when configured, rules otherwise), standing in for the assistant.
+// "Under the Hood" shows every Nemotron call with its tokens, cost and time.
 
 import type { Client } from '@modelcontextprotocol/client';
 import { AppBridge, PostMessageTransport } from '@modelcontextprotocol/ext-apps/app-bridge';
@@ -184,7 +185,7 @@ async function showCard(toolName: string, args: Any, result: Any): Promise<void>
   // No client passed: the host handles the card's tool calls itself, so a tap is logged, remembered and spoken.
   const bridge = new AppBridge(
     null,
-    { name: 'Pawzoo Alexa+ simulator', version: '1.0.0' },
+    { name: 'Pawzoo voice assistant simulator', version: '1.0.0' },
     { serverTools: {}, logging: {} },
     { hostContext: { theme: currentTheme(), displayMode: 'inline' } },
   );
@@ -275,7 +276,8 @@ async function turn(utterance: string): Promise<void> {
       }),
     })
   ).json()) as { calls: Array<{ name: string; arguments: Any }>; say?: string; source: string; modelId?: string };
-  $('#brain').textContent = plan.source === 'bedrock' ? `Amazon Bedrock (${plan.modelId ?? 'model'})` : 'rules (offline)';
+  $('#brain').textContent = plan.source === 'nemotron' ? `${plan.modelId ?? 'Nemotron'} on Nebius` : 'rules (offline)';
+  void refreshCalls();
 
   if (!plan.calls.length) {
     // "No", or anything else that isn't a tool call, moves on: nothing is left waiting for a yes.
@@ -311,7 +313,8 @@ async function turn(utterance: string): Promise<void> {
     remember(call.name, result);
     if (call.name === 'get_pet_day') {
       const sc = result.structuredContent ?? {};
-      $('#digest').textContent = sc.digestSource === 'bedrock' ? `Amazon Bedrock (${sc.digestModel})` : 'template (Bedrock off or failed)';
+      $('#digest').textContent = sc.digestSource === 'nemotron' ? `${sc.digestModel} on Nebius` : 'template (Nemotron off or failed)';
+      void refreshCalls();
     }
     const scene = sceneFor(call.name, result);
     if (scene) setScene(scene);
@@ -439,6 +442,18 @@ function listen(): void {
         `<li><span>${new Date(e.at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' })}</span> <b>${esc(e.ringType)}</b> ${esc(e.subjects.join('+'))} &middot; ${esc(e.cameraId)} &rarr; <i>${esc(e.tag)}</i></li>`,
       );
     }
+    if (p.type === 'digest') {
+      // Proactive: nobody asked. Pawzoo's evening update arrives on its schedule (or from the standalone job).
+      const d = p.digest;
+      transcript.innerHTML = '';
+      cardHost.innerHTML = '';
+      transcript.insertAdjacentHTML('beforeend', `<p class="turn person">Evening update &middot; ${esc(d.local)}${d.trigger === 'job' ? ' &middot; from the scheduled job' : ''}</p>`);
+      setScene('day');
+      setLight('speaking');
+      say(d.text);
+      $('#digest').textContent = d.source === 'nemotron' ? `${d.modelId ?? 'Nemotron'} on Nebius` : 'template (Nemotron off or failed)';
+      void refreshCalls();
+    }
     if (p.type === 'alert') {
       memory.openAlert = p.alert.id;
       banner.hidden = false;
@@ -485,16 +500,47 @@ async function boot(): Promise<void> {
     );
   } else {
     const status = (await statusRes.json()) as Any;
-    const state = status.store === 'dynamodb' ? 'Amazon DynamoDB' : status.storeError ? `local file (DynamoDB failed: ${esc(status.storeError)})` : 'local file';
-    session.insertAdjacentHTML('beforeend', `<dt>State</dt><dd${status.storeError ? ' class="warn"' : ''}>${state}</dd><dt>Ring</dt><dd>${status.ring === 'live' ? 'live account' : 'replay'}</dd>`);
-    if (!status.bedrockModel) $('#brain').textContent = 'rules (Bedrock off: no BEDROCK_MODEL_ID)';
+    const state = status.store === 'dynamodb' ? 'cloud table' : status.storeError ? `local file (cloud table failed: ${esc(status.storeError)})` : 'local file';
+    session.insertAdjacentHTML('beforeend', `<dt>State</dt><dd${status.storeError ? ' class="warn"' : ''}>${state}</dd><dt>Cameras</dt><dd>${status.ring === 'live' ? 'live account' : 'replay'}</dd>`);
+    if (status.nemotron) session.insertAdjacentHTML('beforeend', `<dt>Models</dt><dd>${esc(status.nemotron.tools)} picks tools, ${esc(status.nemotron.phrase)} phrases</dd>`);
+    else $('#brain').textContent = 'rules (Nemotron off: no NEBIUS_API_KEY)';
     voiceOn = Boolean(status.voice);
     session.insertAdjacentHTML('beforeend', `<dt>Voice</dt><dd>${status.voice ? 'ElevenLabs' : 'off (set ELEVENLABS_API_KEY)'}</dd>`);
   }
   listen();
+  void refreshCalls();
   setLight('idle');
 }
 
 boot().catch((err) => {
   session.textContent = `Could not reach the Pawzoo server: ${String(err)}`;
+});
+
+// ---------- Nemotron calls: cost and latency ----------
+
+const usd = (n: number) => (n === 0 ? '$0' : n < 0.01 ? `$${n.toFixed(5)}` : `$${n.toFixed(3)}`);
+
+async function refreshCalls(): Promise<void> {
+  const res = await fetch('/api/calls');
+  if (!res.ok) return;
+  const d = (await res.json()) as {
+    calls: Array<{ scope: string; job: string; model: string; tokensIn: number; tokensOut: number; latencyMs: number; costUsd: number; ok: boolean }>;
+    totals: Record<string, { calls: number; tokens: number; costUsd: number; medianMs: number }>;
+    spentUsd: number;
+    capUsd: number;
+  };
+  const row = (label: string, t?: { calls: number; tokens: number; costUsd: number; medianMs: number }) =>
+    t ? `<div class="nemo-row"><b>${label}</b><span>${t.calls} ${t.calls === 1 ? 'call' : 'calls'} &middot; ${usd(t.costUsd / t.calls)} each &middot; ${t.medianMs} ms</span></div>` : '';
+  const total = d.calls.length || d.spentUsd ? `<div class="nemo-row"><b>Spent</b><span>${usd(d.spentUsd)} of ${usd(d.capUsd)} cap</span></div>` : '';
+  $('#nemo-totals').innerHTML = row('Conversation', d.totals.conversation) + row('Digest', d.totals.digest) + total || '<p class="small">No model calls yet.</p>';
+  $('#calls').innerHTML = d.calls
+    .map(
+      (c) =>
+        `<details><summary><code>${esc(c.scope.replace(/^conversation /, ''))}</code><span>${c.ok ? `${esc(c.model)} &middot; ${c.tokensIn + c.tokensOut} tok &middot; ${c.latencyMs} ms &middot; ${usd(c.costUsd)}` : 'failed'}</span></summary><pre>${esc(JSON.stringify(c, null, 2))}</pre></details>`,
+    )
+    .join('');
+}
+
+$('#run-digest').addEventListener('click', () => {
+  void fetch('/api/digest/run', { method: 'POST' });
 });

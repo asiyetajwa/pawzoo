@@ -56,7 +56,7 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
     { name: 'pawzoo', title: 'Pawzoo', version: '1.0.0' },
     {
       instructions:
-        "Pawzoo knows what the family's dog did today from their Ring cameras, and can reorder food, pay the dog walker and book care. " +
+        "Pawzoo knows what the family's dog did today from their home cameras, and can reorder food, pay the dog walker and book care. " +
         'Speak the `say` field. Anything that spends money or books time returns a quote first: read it out and call confirm_action only after the person clearly says yes. ' +
         'Pawzoo gives no medical or veterinary advice.',
     },
@@ -72,7 +72,7 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
     'get_pet_day',
     {
       title: "How was the dog's day",
-      description: "Summarises the dog's day so far from the Ring cameras: walk, meals, naps, play, alerts, and food left. Use for 'How was Biscuit's day?'",
+      description: "Summarises the dog's day so far from the home cameras: walk, meals, naps, play, alerts, and food left. Use for 'How was Biscuit's day?'",
       inputSchema: z.object({ date: dateArg }),
       annotations: { readOnlyHint: true },
       _meta: CARD_META,
@@ -113,7 +113,7 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
     'play_on_tv',
     {
       title: 'Show on the TV',
-      description: "Plays the dog's day reel, or one moment, on the family's Fire TV.",
+      description: "Plays the dog's day reel, or one moment, on the family's TV.",
       inputSchema: z.object({
         target: z.enum(['day_reel', 'moment']),
         event_id: z.string().optional().describe('Moment to play when target is moment (from find_moment).'),
@@ -178,7 +178,7 @@ export function createPawzooServer(rt: Runtime, cardHtmlPath: string): McpServer
     'get_walk_report',
     {
       title: 'Walk report',
-      description: "Checks the dog walker's visit against what the Ring front door camera saw: start, end, minutes versus booked, and the week so far.",
+      description: "Checks the dog walker's visit against what the front door camera saw: start, end, minutes versus booked, and the week so far.",
       inputSchema: z.object({ date: dateArg }),
       annotations: { readOnlyHint: true },
       _meta: CARD_META,

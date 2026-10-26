@@ -112,11 +112,13 @@ async function showHome(): Promise<void> {
   home.hidden = false;
   title.innerHTML = `<span>${day.pet.name}'s</span><span>Day</span>`;
   fitTitle(title);
+  $('.side .kicker').textContent = 'Today on camera';
+  $('.side .title').innerHTML = 'What she<br>got up to';
   $('#summary').innerHTML = (day.summary.highlights as string[]).map((h) => `<li>${h.replace(/(\d) (AM|PM)/g, '$1\u00a0$2')}</li>`).join('') || '<li>Nothing yet today.</li>';
   $<HTMLButtonElement>('#play').focus();
 }
 
-/** Alerts dismissed on this screen only; Alexa+ "she's back inside" clears them everywhere. */
+/** Alerts dismissed on this screen only; the assistant's "she's back inside" clears them everywhere. */
 const dismissed = new Set<string>();
 $('#dismiss').addEventListener('click', async () => {
   const day = await (await fetch('/api/day')).json();
@@ -158,6 +160,15 @@ es.onmessage = async (m) => {
       void showHome();
     }
     if (p.target !== 'home' && p.target !== 'alert') alertEl.hidden = true;
+  }
+  if (p.type === 'digest' && alertEl.hidden) {
+    // The proactive evening update, written on Pawzoo's schedule.
+    await showHome();
+    $('.side .kicker').textContent = `Evening update · ${String(p.digest.local)}`;
+    $('.side .title').innerHTML = 'Her day,<br>in a few words';
+    const li = document.createElement('li');
+    li.textContent = p.digest.text;
+    $('#summary').replaceChildren(li);
   }
   if (p.type === 'alert') await showAlert(p.alert);
   if (p.type === 'state' && (p.reason === 'alert_resolved' || p.reason === 'reset')) {

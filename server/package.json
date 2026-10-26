@@ -1,7 +1,7 @@
 {
   "name": "@pawzoo/server",
   "version": "1.0.0",
-  "description": "Pawzoo: Alexa+ MCP server, Ring webhooks and Fire TV feed",
+  "description": "Pawzoo: a pet-care MCP server, with NVIDIA Nemotron on Nebius Token Factory",
   "scripts": {
     "dev": "npm run views && tsx watch src/index.ts",
     "start": "node dist/index.js",
@@ -9,11 +9,10 @@
     "views": "node build-views.mjs",
     "typecheck": "tsc -p . --noEmit",
     "test": "npm run views && node --import tsx --test test/*.test.ts",
-    "check:aws": "tsx scripts/check-aws.ts"
+    "digest:job": "node dist/jobs/evening-digest.js"
   },
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.1154.0",
     "@aws-sdk/client-dynamodb": "^3.1154.0",
     "@aws-sdk/lib-dynamodb": "^3.1154.0",
     "@modelcontextprotocol/client": "2.3.1",
