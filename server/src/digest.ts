@@ -63,7 +63,7 @@ export async function writeDigest(d: DaySummary, scope = 'digest asked'): Promis
     };
     const text = await phrase(`${SYSTEM}\nReply with only the update.`, JSON.stringify(facts), scope);
     if (!text) return fallback;
-    return { text: text.replace(/\s*[—–]\s*/g, ', '), source: 'nemotron', modelId: modelLabel(MODELS.phrase) };
+    return { text: text.replace(/\s*[—–]\s*/g, ', ').replace(/\s+/g, ' ').trim(), source: 'nemotron', modelId: modelLabel(MODELS.phrase) };
   } catch (err) {
     console.warn('[digest] Nemotron unavailable, using template:', (err as Error).message);
     return fallback;

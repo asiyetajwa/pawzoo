@@ -1,0 +1,108 @@
+{
+  "calls": [
+    {
+      "at": "2026-10-26T10:07:37.619Z",
+      "scope": "digest schedule",
+      "job": "phrase",
+      "model": "Nemotron 3 Nano",
+      "tokensIn": 490,
+      "tokensOut": 97,
+      "latencyMs": 1378,
+      "costUsd": 0.00005267999999999999,
+      "ok": true
+    },
+    {
+      "at": "2026-10-26T10:07:27.443Z",
+      "scope": "conversation turn 3 step 2",
+      "job": "tools",
+      "model": "Nemotron 3 Super",
+      "tokensIn": 1984,
+      "tokensOut": 120,
+      "latencyMs": 1278,
+      "costUsd": 0.0007032,
+      "ok": true
+    },
+    {
+      "at": "2026-10-26T10:07:26.126Z",
+      "scope": "conversation turn 3",
+      "job": "tools",
+      "model": "Nemotron 3 Super",
+      "tokensIn": 1944,
+      "tokensOut": 68,
+      "latencyMs": 938,
+      "costUsd": 0.0006443999999999999,
+      "ok": true
+    },
+    {
+      "at": "2026-10-26T10:07:21.698Z",
+      "scope": "conversation turn 2 step 2",
+      "job": "tools",
+      "model": "Nemotron 3 Super",
+      "tokensIn": 1936,
+      "tokensOut": 133,
+      "latencyMs": 1223,
+      "costUsd": 0.0007005,
+      "ok": true
+    },
+    {
+      "at": "2026-10-26T10:07:20.424Z",
+      "scope": "conversation turn 2",
+      "job": "tools",
+      "model": "Nemotron 3 Super",
+      "tokensIn": 1883,
+      "tokensOut": 26,
+      "latencyMs": 796,
+      "costUsd": 0.0005882999999999999,
+      "ok": true
+    },
+    {
+      "at": "2026-10-26T10:07:16.051Z",
+      "scope": "conversation turn 1 step 2",
+      "job": "tools",
+      "model": "Nemotron 3 Super",
+      "tokensIn": 1888,
+      "tokensOut": 83,
+      "latencyMs": 1052,
+      "costUsd": 0.0006410999999999999,
+      "ok": true
+    },
+    {
+      "at": "2026-10-26T10:07:14.949Z",
+      "scope": "digest asked",
+      "job": "phrase",
+      "model": "Nemotron 3 Nano",
+      "tokensIn": 416,
+      "tokensOut": 63,
+      "latencyMs": 747,
+      "costUsd": 0.000040079999999999996,
+      "ok": true
+    },
+    {
+      "at": "2026-10-26T10:07:14.175Z",
+      "scope": "conversation turn 1",
+      "job": "tools",
+      "model": "Nemotron 3 Super",
+      "tokensIn": 1812,
+      "tokensOut": 27,
+      "latencyMs": 578,
+      "costUsd": 0.0005679,
+      "ok": true
+    }
+  ],
+  "totals": {
+    "conversation": {
+      "calls": 6,
+      "tokens": 11904,
+      "costUsd": 0.0038453999999999997,
+      "medianMs": 1052
+    },
+    "digest": {
+      "calls": 2,
+      "tokens": 1066,
+      "costUsd": 0.00009275999999999999,
+      "medianMs": 1378
+    }
+  },
+  "spentUsd": 0.013679459999999996,
+  "capUsd": 0.15
+}

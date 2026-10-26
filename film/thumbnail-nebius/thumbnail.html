@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: 'Outfit'; src: url(../public/fonts/outfit-variable.woff2) format('woff2'); font-weight: 300 800; }
+* { margin: 0; box-sizing: border-box; }
+body { width: var(--w); height: var(--h); overflow: hidden; font-family: 'Outfit', sans-serif; color: #1f1b2e;
+  background: radial-gradient(70% 60% at 0% 0%, #f4f2fb 0%, transparent 70%), #e7e7ec;
+  display: grid; grid-template-columns: 0.9fr 1.1fr; grid-template-rows: minmax(0,1fr); gap: 4%; padding: 5%; align-items: center; }
+.left { display: flex; flex-direction: column; gap: calc(var(--h) * 0.035); }
+.brand { display: flex; align-items: center; gap: 16px; font-weight: 800; font-size: calc(var(--h) * 0.07); letter-spacing: -2px; }
+.brand img { width: calc(var(--h) * 0.1); height: calc(var(--h) * 0.1); }
+h1 { font-size: calc(var(--h) * 0.085); line-height: 1.02; font-weight: 800; letter-spacing: -3px; }
+h1 em { font-style: normal; color: #8b5cf6; display: block; }
+.chips { display: flex; flex-wrap: wrap; gap: 12px; }
+.chip { padding: 10px 18px; border-radius: 999px; background: #fff; font-weight: 600; font-size: calc(var(--h) * 0.026); box-shadow: 0 10px 24px rgba(31,27,46,.08); }
+.chip b { color: #8b5cf6; }
+.shot { position: relative; height: 100%; display: flex; align-items: center; }
+.shot img { width: 100%; border-radius: 28px; box-shadow: 0 40px 80px rgba(31,27,46,.22); display: block; }
+.badge { position: absolute; left: -4%; bottom: 8%; background: #1f1b2e; color: #fff; padding: 14px 22px; border-radius: 999px; font-weight: 600; font-size: calc(var(--h) * 0.03); box-shadow: 0 20px 40px rgba(31,27,46,.3); }
+.badge i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #76b900; margin-right: 10px; }
+</style></head>
+<body style="--w: 1500px; --h: 1000px">
+<div class="left">
+  <div class="brand"><img src="../public/logo.svg" alt="">Pawzoo</div>
+  <h1>Your dog's day.<em>It speaks up first.</em></h1>
+  <div class="chips"><span class="chip"><b>$0.0012</b> a question</span><span class="chip">7 PM digest, unasked</span></div>
+</div>
+<div class="shot">
+  <img src="../public/pawzoo/tv-evening.png" alt="">
+  <span class="badge"><i></i>NVIDIA Nemotron on Nebius</span>
+</div>
+</body></html>

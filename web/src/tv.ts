@@ -66,7 +66,8 @@ function showStill(c: Any): void {
 }
 
 function next(): void {
-  if (!reel) return;
+  // Something else took the screen (the evening update, home): the reel does not reopen over it.
+  if (!reel || player.hidden) return;
   if (index + 1 < reel.chapters.length) play(index + 1);
   else showHome();
 }
@@ -100,6 +101,7 @@ async function showAlert(alert: { message: string; eventId: string }, day?: Any)
 
 async function showHome(): Promise<void> {
   const day = await (await fetch('/api/day')).json();
+  window.clearTimeout(stillTimer);
   video.pause();
   player.hidden = true;
   // Opened after the dog got out: the alert is what this screen should be showing.

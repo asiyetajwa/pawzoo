@@ -1,0 +1,4 @@
+{
+  "command": "node server/dist/jobs/evening-digest.js",
+  "output": "Delivered (nemotron, Nemotron 3 Nano): Biscuit woke up and stretched in the living room, then had breakfast in a minute. She went on her morning walk with Dana from Leash & Lead, came back with a wagging tail, and later claimed the couch before settling in for a long nap in the sun. She had a burst of backyard zoomies in the afternoon and waited by the door when Maya got home, her best moment of the day. She’s due for a walk in about five days, and food runs out Saturday, so I can reorder soon if you’d like."
+}
